@@ -8,6 +8,7 @@ import Empresas from "./pages/Empresas";
 import EmpresaDetalle from "./pages/EmpresaDetalle";
 import Prensa from "./pages/Prensa";
 import ArticuloDetalle from "./pages/ArticuloDetalle";
+import Mapa from "./pages/Mapa";
 import AdminLogin from "./pages/admin/AdminLogin";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
@@ -26,6 +27,7 @@ function App() {
           <Route path="/empresas/:slug" element={<EmpresaDetalle />} />
           <Route path="/prensa" element={<Prensa />} />
           <Route path="/prensa/:slug" element={<ArticuloDetalle />} />
+          <Route path="/mapa" element={<Mapa />} />
           <Route path="/admin" element={<AdminLogin />} />
           <Route path="/admin/dashboard" element={<AdminDashboard />} />
         </Routes>

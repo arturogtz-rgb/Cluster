@@ -1,5 +1,6 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -13,6 +14,8 @@ from datetime import datetime, timezone
 import bcrypt
 import jwt
 from slugify import slugify
+import shutil
+import aiofiles
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -70,6 +73,9 @@ class Empresa(BaseModel):
     actividades: List[str] = []
     destacada: bool = False
     activa: bool = True
+    # Coordenadas para el mapa
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
@@ -88,6 +94,8 @@ class EmpresaCreate(BaseModel):
     actividades: List[str] = []
     destacada: bool = False
     activa: bool = True
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
 
 class EmpresaUpdate(BaseModel):
     nombre: Optional[str] = None
@@ -104,6 +112,8 @@ class EmpresaUpdate(BaseModel):
     actividades: Optional[List[str]] = None
     destacada: Optional[bool] = None
     activa: Optional[bool] = None
+    latitud: Optional[float] = None
+    longitud: Optional[float] = None
 
 class Articulo(BaseModel):
     model_config = ConfigDict(extra="ignore")
@@ -148,6 +158,55 @@ class LoginRequest(BaseModel):
 class LoginResponse(BaseModel):
     token: str
     username: str
+
+# ==================== SETTINGS & CATEGORIES MODELS ====================
+
+class SiteSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = "site_settings"
+    hero_image: str = "https://images.unsplash.com/photo-1732043846829-dc34d9e2e989?w=1920"
+    hero_title: str = "Descubre la Aventura"
+    hero_subtitle: str = "Explora las experiencias más emocionantes de turismo de naturaleza y aventura en Jalisco, México"
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class SiteSettingsUpdate(BaseModel):
+    hero_image: Optional[str] = None
+    hero_title: Optional[str] = None
+    hero_subtitle: Optional[str] = None
+
+class Categoria(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nombre: str
+    slug: str
+    descripcion: str = ""
+    imagen_url: str = ""
+    orden: int = 0
+    activa: bool = True
+
+class CategoriaCreate(BaseModel):
+    nombre: str
+    descripcion: str = ""
+    imagen_url: str = ""
+    orden: int = 0
+    activa: bool = True
+
+class CategoriaUpdate(BaseModel):
+    nombre: Optional[str] = None
+    descripcion: Optional[str] = None
+    imagen_url: Optional[str] = None
+    orden: Optional[int] = None
+    activa: Optional[bool] = None
+
+class MediaFile(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    filename: str
+    original_name: str
+    url: str
+    size: int
+    mime_type: str
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 # ==================== AUTH HELPERS ====================
 
@@ -375,11 +434,159 @@ async def delete_articulo(slug: str, user = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Artículo no encontrado")
     return {"message": "Artículo eliminado"}
 
-# ==================== CATEGORIES ====================
+# ==================== CATEGORIES CRUD ====================
 
 @api_router.get("/categorias")
 async def get_categorias():
-    return {"categorias": CATEGORIES}
+    # First try to get from database
+    categorias = await db.categorias.find({}, {"_id": 0}).sort("orden", 1).to_list(100)
+    if categorias:
+        return {"categorias": categorias}
+    
+    # Fallback to default categories
+    return {"categorias": [{"nombre": c, "slug": slugify(c), "descripcion": "", "imagen_url": "", "orden": i, "activa": True} for i, c in enumerate(CATEGORIES)]}
+
+@api_router.post("/categorias", response_model=Categoria)
+async def create_categoria(data: CategoriaCreate, user = Depends(get_current_user)):
+    categoria_dict = data.model_dump()
+    categoria_dict["slug"] = slugify(data.nombre, lowercase=True)
+    
+    existing = await db.categorias.find_one({"slug": categoria_dict["slug"]})
+    if existing:
+        raise HTTPException(status_code=400, detail="Categoría ya existe")
+    
+    categoria = Categoria(**categoria_dict)
+    doc = categoria.model_dump()
+    await db.categorias.insert_one(doc)
+    return categoria
+
+@api_router.put("/categorias/{slug}", response_model=Categoria)
+async def update_categoria(slug: str, data: CategoriaUpdate, user = Depends(get_current_user)):
+    categoria = await db.categorias.find_one({"slug": slug}, {"_id": 0})
+    if not categoria:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    
+    if "nombre" in update_data:
+        new_slug = slugify(update_data["nombre"], lowercase=True)
+        if new_slug != slug:
+            existing = await db.categorias.find_one({"slug": new_slug})
+            if existing:
+                raise HTTPException(status_code=400, detail="Nombre de categoría ya existe")
+            update_data["slug"] = new_slug
+    
+    await db.categorias.update_one({"slug": slug}, {"$set": update_data})
+    updated = await db.categorias.find_one({"slug": update_data.get("slug", slug)}, {"_id": 0})
+    return updated
+
+@api_router.delete("/categorias/{slug}")
+async def delete_categoria(slug: str, user = Depends(get_current_user)):
+    result = await db.categorias.delete_one({"slug": slug})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Categoría no encontrada")
+    return {"message": "Categoría eliminada"}
+
+# ==================== SITE SETTINGS ====================
+
+@api_router.get("/settings", response_model=SiteSettings)
+async def get_settings():
+    settings = await db.settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if not settings:
+        # Return default settings
+        return SiteSettings()
+    
+    if isinstance(settings.get('updated_at'), str):
+        settings['updated_at'] = datetime.fromisoformat(settings['updated_at'])
+    
+    return settings
+
+@api_router.put("/settings", response_model=SiteSettings)
+async def update_settings(data: SiteSettingsUpdate, user = Depends(get_current_user)):
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    update_data["id"] = "site_settings"
+    
+    await db.settings.update_one(
+        {"id": "site_settings"},
+        {"$set": update_data},
+        upsert=True
+    )
+    
+    settings = await db.settings.find_one({"id": "site_settings"}, {"_id": 0})
+    if isinstance(settings.get('updated_at'), str):
+        settings['updated_at'] = datetime.fromisoformat(settings['updated_at'])
+    
+    return settings
+
+# ==================== MEDIA UPLOAD ====================
+
+UPLOAD_DIR = ROOT_DIR / "uploads"
+UPLOAD_DIR.mkdir(exist_ok=True)
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
+
+@api_router.get("/media", response_model=List[MediaFile])
+async def get_media_files(user = Depends(get_current_user)):
+    files = await db.media.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+    for f in files:
+        if isinstance(f.get('created_at'), str):
+            f['created_at'] = datetime.fromisoformat(f['created_at'])
+    return files
+
+@api_router.post("/media/upload", response_model=MediaFile)
+async def upload_file(file: UploadFile = File(...), user = Depends(get_current_user)):
+    # Validate file extension
+    file_ext = Path(file.filename).suffix.lower()
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(status_code=400, detail=f"Tipo de archivo no permitido. Permitidos: {', '.join(ALLOWED_EXTENSIONS)}")
+    
+    # Generate unique filename
+    unique_id = str(uuid.uuid4())[:8]
+    safe_name = slugify(Path(file.filename).stem, lowercase=True)
+    new_filename = f"{safe_name}_{unique_id}{file_ext}"
+    file_path = UPLOAD_DIR / new_filename
+    
+    # Save file
+    try:
+        content = await file.read()
+        if len(content) > MAX_FILE_SIZE:
+            raise HTTPException(status_code=400, detail="Archivo demasiado grande. Máximo 10MB")
+        
+        async with aiofiles.open(file_path, 'wb') as f:
+            await f.write(content)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error al guardar archivo: {str(e)}")
+    
+    # Create media record
+    media_file = MediaFile(
+        filename=new_filename,
+        original_name=file.filename,
+        url=f"/api/uploads/{new_filename}",
+        size=len(content),
+        mime_type=file.content_type or "application/octet-stream"
+    )
+    
+    doc = media_file.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    await db.media.insert_one(doc)
+    
+    return media_file
+
+@api_router.delete("/media/{file_id}")
+async def delete_media(file_id: str, user = Depends(get_current_user)):
+    media = await db.media.find_one({"id": file_id}, {"_id": 0})
+    if not media:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+    
+    # Delete file from disk
+    file_path = UPLOAD_DIR / media["filename"]
+    if file_path.exists():
+        file_path.unlink()
+    
+    # Delete from database
+    await db.media.delete_one({"id": file_id})
+    return {"message": "Archivo eliminado"}
 
 # ==================== ROOT ====================
 
@@ -430,7 +637,9 @@ async def seed_data():
             ),
             actividades=["Navegación Terrestre", "Aventura en la Barranca", "Sierra de Quila", "Capacitación", "Senderismo", "Rappel"],
             destacada=True,
-            activa=True
+            activa=True,
+            latitud=20.7214,
+            longitud=-103.4189
         )
         doc = ecomuk_data.model_dump()
         doc['created_at'] = doc['created_at'].isoformat()
@@ -461,7 +670,9 @@ async def seed_data():
             ),
             actividades=["José Cuervo Express", "Tours de Tequila", "Haciendas", "Transportación", "Paquetes turísticos", "Lago de Chapala"],
             destacada=True,
-            activa=True
+            activa=True,
+            latitud=20.6597,
+            longitud=-103.3496
         )
         doc = aventurate_data.model_dump()
         doc['created_at'] = doc['created_at'].isoformat()
@@ -499,6 +710,9 @@ async def seed_data():
 
 # Include router and middleware
 app.include_router(api_router)
+
+# Mount uploads directory as static files
+app.mount("/api/uploads", StaticFiles(directory=str(ROOT_DIR / "uploads")), name="uploads")
 
 app.add_middleware(
     CORSMiddleware,

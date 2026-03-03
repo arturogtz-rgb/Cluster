@@ -6,19 +6,28 @@ const CLUSTER_LOGO = "https://customer-assets.emergentagent.com/job_tourism-clus
 
 const FloatingNav = () => {
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showNavLogo, setShowNavLogo] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const location = useLocation();
 
   // Hide nav on admin pages
   const isAdminPage = location.pathname.startsWith("/admin");
+  const isHomePage = location.pathname === "/";
 
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolled(window.scrollY > 50);
+      const scrollY = window.scrollY;
+      setIsScrolled(scrollY > 50);
+      // Show nav logo when scrolled past hero logo (approx 300px on home)
+      setShowNavLogo(isHomePage ? scrollY > 300 : true);
     };
+    
+    // Initial check
+    handleScroll();
+    
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [isHomePage]);
 
   useEffect(() => {
     setIsMobileMenuOpen(false);
@@ -30,6 +39,7 @@ const FloatingNav = () => {
     { href: "/", label: "Inicio" },
     { href: "/empresas", label: "Empresas" },
     { href: "/prensa", label: "Prensa" },
+    { href: "/mapa", label: "Mapa" },
   ];
 
   const isActive = (href) => {
@@ -48,13 +58,21 @@ const FloatingNav = () => {
         }`}
       >
         <div className="flex items-center gap-4 md:gap-8">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2" data-testid="nav-logo">
-            <img
-              src={CLUSTER_LOGO}
-              alt="Clúster Turismo Jalisco"
-              className="h-8 md:h-10 w-auto"
-            />
+          {/* Logo - aparece con scroll en homepage, siempre en otras páginas */}
+          <Link 
+            to="/" 
+            className={`flex items-center gap-2 transition-all duration-500 ${
+              showNavLogo ? "opacity-100 scale-100" : "opacity-0 scale-75 pointer-events-none"
+            }`} 
+            data-testid="nav-logo"
+          >
+            <div className={`${isScrolled ? "" : "bg-white/90 backdrop-blur-sm rounded-xl p-1.5"}`}>
+              <img
+                src={CLUSTER_LOGO}
+                alt="Clúster Turismo Jalisco"
+                className="h-7 md:h-9 w-auto"
+              />
+            </div>
           </Link>
 
           {/* Desktop Navigation */}

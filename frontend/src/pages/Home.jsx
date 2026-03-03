@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { ArrowRight, Mountain, Users, Award, Leaf } from "lucide-react";
+import { ArrowRight, Mountain, Users, Award, Leaf, MapPin } from "lucide-react";
 import CompanyCard from "../components/CompanyCard";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const CLUSTER_LOGO = "https://customer-assets.emergentagent.com/job_tourism-cluster-mx/artifacts/jvvolfwz_Gemini_Generated_Image_plcp43plcp43plcp.png";
 
-const HERO_IMAGE = "https://images.unsplash.com/photo-1732043846829-dc34d9e2e989?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1ODh8MHwxfHNlYXJjaHwxfHxKYWxpc2NvJTIwbmF0dXJlJTIwbGFuZHNjYXBlJTIwYWdhdmUlMjBtb3VudGFpbnN8ZW58MHx8fHwxNzcyNTEzMTgxfDA&ixlib=rb-4.1.0&q=85";
+const DEFAULT_HERO_IMAGE = "https://images.unsplash.com/photo-1732043846829-dc34d9e2e989?w=1920";
 
 const CATEGORY_IMAGES = [
   {
@@ -47,6 +47,12 @@ const STATS = [
 const Home = () => {
   const [empresasDestacadas, setEmpresasDestacadas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState({
+    hero_image: DEFAULT_HERO_IMAGE,
+    hero_title: "Descubre la Aventura",
+    hero_subtitle: "Explora las experiencias más emocionantes de turismo de naturaleza y aventura en Jalisco, México"
+  });
+  const [categorias, setCategorias] = useState(CATEGORY_IMAGES);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -54,7 +60,31 @@ const Home = () => {
         // Seed data first
         await axios.post(`${API}/seed`);
         
-        // Then fetch featured companies
+        // Fetch settings
+        const settingsRes = await axios.get(`${API}/settings`);
+        if (settingsRes.data) {
+          setSettings(prev => ({ ...prev, ...settingsRes.data }));
+        }
+
+        // Fetch categories
+        const catRes = await axios.get(`${API}/categorias`);
+        if (catRes.data?.categorias && Array.isArray(catRes.data.categorias)) {
+          // Merge with default images if category has imagen_url
+          const mergedCats = catRes.data.categorias.map(cat => {
+            const defaultCat = CATEGORY_IMAGES.find(c => c.id === cat.nombre);
+            return {
+              id: cat.nombre,
+              label: cat.nombre,
+              image: cat.imagen_url || defaultCat?.image || CATEGORY_IMAGES[0].image,
+              description: cat.descripcion || defaultCat?.description || ""
+            };
+          });
+          if (mergedCats.length > 0) {
+            setCategorias(mergedCats.slice(0, 4));
+          }
+        }
+        
+        // Fetch featured companies
         const response = await axios.get(`${API}/empresas?destacada=true`);
         setEmpresasDestacadas(response.data);
       } catch (error) {
@@ -74,22 +104,41 @@ const Home = () => {
         {/* Background Image */}
         <div className="absolute inset-0">
           <img
-            src={HERO_IMAGE}
+            src={settings.hero_image}
             alt="Paisaje de Jalisco"
             className="w-full h-full object-cover"
           />
-          <div className="hero-gradient absolute inset-0" />
+          {/* Improved gradient overlay for better text readability */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(
+                to top,
+                rgba(0, 0, 0, 0.85) 0%,
+                rgba(0, 0, 0, 0.6) 25%,
+                rgba(0, 0, 0, 0.3) 50%,
+                rgba(0, 0, 0, 0.1) 75%,
+                transparent 100%
+              )`
+            }}
+          />
         </div>
 
         {/* Hero Content */}
-        <div className="absolute bottom-12 left-6 md:left-12 z-20 max-w-4xl">
-          <div className="mb-6 opacity-0 animate-fade-in-up" style={{ animationDelay: "200ms", animationFillMode: "forwards" }}>
-            <img
-              src={CLUSTER_LOGO}
-              alt="Clúster de Turismo"
-              className="h-20 md:h-28 w-auto"
-              data-testid="hero-logo"
-            />
+        <div className="absolute bottom-16 left-6 md:left-12 z-20 max-w-4xl">
+          {/* Large Logo - visible initially, fades on scroll */}
+          <div 
+            className="mb-6 opacity-0 animate-fade-in-up hero-logo-large" 
+            style={{ animationDelay: "200ms", animationFillMode: "forwards" }}
+          >
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 inline-block shadow-floating">
+              <img
+                src={CLUSTER_LOGO}
+                alt="Clúster de Turismo"
+                className="h-16 md:h-24 w-auto"
+                data-testid="hero-logo"
+              />
+            </div>
           </div>
           
           <h1 
@@ -97,16 +146,16 @@ const Home = () => {
             style={{ animationDelay: "400ms", animationFillMode: "forwards" }}
             data-testid="hero-title"
           >
-            Descubre la<br />
-            <span className="text-adventure-light">Aventura</span>
+            {settings.hero_title.split(" ").slice(0, -1).join(" ")}<br />
+            <span className="text-adventure-light">{settings.hero_title.split(" ").slice(-1)}</span>
           </h1>
           
           <p 
-            className="font-inter text-white/80 text-base md:text-lg max-w-xl mb-8 opacity-0 animate-fade-in-up"
+            className="font-inter text-white/90 text-base md:text-lg max-w-xl mb-8 opacity-0 animate-fade-in-up drop-shadow-lg"
             style={{ animationDelay: "600ms", animationFillMode: "forwards" }}
             data-testid="hero-subtitle"
           >
-            Explora las experiencias más emocionantes de turismo de naturaleza y aventura en Jalisco, México
+            {settings.hero_subtitle}
           </p>
           
           <div 
@@ -122,11 +171,12 @@ const Home = () => {
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
-              to="/prensa"
-              data-testid="hero-cta-secondary"
-              className="bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-full text-sm font-bold uppercase tracking-widest transition-all duration-300 hover:bg-white/20 border border-white/20 inline-flex items-center justify-center"
+              to="/mapa"
+              data-testid="hero-cta-map"
+              className="bg-white/10 backdrop-blur-sm text-white px-8 py-4 rounded-full text-sm font-bold uppercase tracking-widest transition-all duration-300 hover:bg-white/20 border border-white/20 inline-flex items-center justify-center gap-2"
             >
-              Noticias
+              <MapPin className="w-4 h-4" />
+              Ver Mapa
             </Link>
           </div>
         </div>
@@ -180,7 +230,7 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {CATEGORY_IMAGES.map((cat, index) => (
+            {categorias.map((cat, index) => (
               <Link
                 key={cat.id}
                 to={`/empresas?categoria=${encodeURIComponent(cat.id)}`}
@@ -270,15 +320,20 @@ const Home = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between gap-6">
             <div className="flex items-center gap-4">
-              <img
-                src={CLUSTER_LOGO}
-                alt="Clúster Turismo Jalisco"
-                className="h-16 w-auto brightness-0 invert"
-              />
+              <div className="bg-white rounded-xl p-2">
+                <img
+                  src={CLUSTER_LOGO}
+                  alt="Clúster Turismo Jalisco"
+                  className="h-12 w-auto"
+                />
+              </div>
             </div>
             <div className="flex items-center gap-8 text-white/70 text-sm">
               <Link to="/empresas" className="hover:text-white transition-colors">
                 Empresas
+              </Link>
+              <Link to="/mapa" className="hover:text-white transition-colors">
+                Mapa
               </Link>
               <Link to="/prensa" className="hover:text-white transition-colors">
                 Prensa
