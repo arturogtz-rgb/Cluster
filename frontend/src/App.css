@@ -1,34 +1,175 @@
-.App-logo {
-    height: 40vmin;
-    pointer-events: none;
+/* Animation utilities */
+.animate-delay-100 {
+    animation-delay: 100ms;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-    .App-logo {
-        animation: App-logo-spin infinite 20s linear;
+.animate-delay-200 {
+    animation-delay: 200ms;
+}
+
+.animate-delay-300 {
+    animation-delay: 300ms;
+}
+
+.animate-delay-400 {
+    animation-delay: 400ms;
+}
+
+.animate-delay-500 {
+    animation-delay: 500ms;
+}
+
+/* Hero gradient overlay */
+.hero-gradient {
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.8) 0%,
+        rgba(0, 0, 0, 0.4) 40%,
+        rgba(0, 0, 0, 0.1) 70%,
+        transparent 100%
+    );
+}
+
+/* Card hover effects */
+.company-card {
+    transition: all 0.5s ease-out;
+}
+
+.company-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+}
+
+.company-card:hover .card-image {
+    transform: scale(1.1);
+}
+
+/* WhatsApp button pulse */
+@keyframes pulse-green {
+    0%, 100% {
+        box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 15px rgba(37, 211, 102, 0);
     }
 }
 
-.App-header {
-    background-color: #0f0f10;
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    font-size: calc(10px + 2vmin);
+.whatsapp-pulse {
+    animation: pulse-green 2s infinite;
+}
+
+/* Floating nav glass effect */
+.nav-glass {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Category badge styles */
+.category-badge {
+    background: linear-gradient(135deg, #1a4d2e 0%, #2d6a4f 100%);
+}
+
+/* Search input focus */
+.search-input:focus {
+    box-shadow: 0 0 0 3px rgba(26, 77, 46, 0.2);
+}
+
+/* Image overlay on hover */
+.image-overlay {
+    background: linear-gradient(
+        to top,
+        rgba(26, 77, 46, 0.9) 0%,
+        rgba(26, 77, 46, 0.4) 50%,
+        transparent 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+}
+
+.company-card:hover .image-overlay {
+    opacity: 1;
+}
+
+/* Active nav link */
+.nav-link-active {
+    color: #1a4d2e;
+    font-weight: 600;
+}
+
+/* Tag styles */
+.activity-tag {
+    background: rgba(26, 77, 46, 0.1);
+    color: #1a4d2e;
+    transition: all 0.2s ease;
+}
+
+.activity-tag:hover {
+    background: #1a4d2e;
     color: white;
 }
 
-.App-link {
-    color: #61dafb;
+/* Gallery image hover */
+.gallery-image {
+    transition: transform 0.5s ease-out;
 }
 
-@keyframes App-logo-spin {
-    from {
-        transform: rotate(0deg);
+.gallery-image:hover {
+    transform: scale(1.05);
+}
+
+/* Admin sidebar */
+.admin-sidebar {
+    background: linear-gradient(180deg, #1a4d2e 0%, #143d23 100%);
+}
+
+/* Form styles */
+.form-input {
+    transition: all 0.2s ease;
+}
+
+.form-input:focus {
+    border-color: #1a4d2e;
+    box-shadow: 0 0 0 3px rgba(26, 77, 46, 0.1);
+}
+
+/* Button styles */
+.btn-primary {
+    background: #1a4d2e;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+    background: #143d23;
+    transform: scale(1.02);
+}
+
+.btn-secondary {
+    background: white;
+    color: #1a4d2e;
+    border: 1px solid rgba(26, 77, 46, 0.2);
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+    background: #fafaf9;
+    transform: scale(1.02);
+}
+
+/* Loading skeleton */
+@keyframes skeleton-loading {
+    0% {
+        background-position: -200% 0;
     }
-    to {
-        transform: rotate(360deg);
+    100% {
+        background-position: 200% 0;
     }
+}
+
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
 }
