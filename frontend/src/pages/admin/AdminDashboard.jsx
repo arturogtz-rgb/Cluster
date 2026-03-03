@@ -1,9 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
-import ReactQuill from "react-quill";
-import "react-quill/dist/quill.snow.css";
 import {
   Building2,
   Newspaper,
@@ -17,6 +15,11 @@ import {
   EyeOff,
   Star,
   Menu,
+  Bold,
+  Italic,
+  List,
+  Heading2,
+  Link as LinkIcon,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -31,14 +34,117 @@ const CATEGORIES = [
   "Parque de aventura",
 ];
 
-const quillModules = {
-  toolbar: [
-    [{ header: [2, 3, false] }],
-    ["bold", "italic", "underline"],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["link"],
-    ["clean"],
-  ],
+// Simple Rich Text Editor component compatible with React 19
+const RichTextEditor = ({ value, onChange }) => {
+  const [textValue, setTextValue] = useState(value || "");
+
+  useEffect(() => {
+    setTextValue(value || "");
+  }, [value]);
+
+  const handleChange = (e) => {
+    const newValue = e.target.value;
+    setTextValue(newValue);
+    onChange(newValue);
+  };
+
+  const insertTag = useCallback((tag, closingTag = null) => {
+    const textarea = document.getElementById("rich-editor");
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textValue.substring(start, end);
+    const closeTag = closingTag || tag;
+    
+    let newText;
+    if (selectedText) {
+      newText = textValue.substring(0, start) + `<${tag}>${selectedText}</${closeTag}>` + textValue.substring(end);
+    } else {
+      newText = textValue.substring(0, start) + `<${tag}></${closeTag}>` + textValue.substring(end);
+    }
+    
+    setTextValue(newText);
+    onChange(newText);
+  }, [textValue, onChange]);
+
+  const insertList = useCallback(() => {
+    const textarea = document.getElementById("rich-editor");
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textValue.substring(start, end);
+    
+    let newText;
+    if (selectedText) {
+      const items = selectedText.split('\n').map(item => `<li>${item.trim()}</li>`).join('\n');
+      newText = textValue.substring(0, start) + `<ul>\n${items}\n</ul>` + textValue.substring(end);
+    } else {
+      newText = textValue.substring(0, start) + `<ul>\n<li></li>\n</ul>` + textValue.substring(end);
+    }
+    
+    setTextValue(newText);
+    onChange(newText);
+  }, [textValue, onChange]);
+
+  return (
+    <div className="border border-stone-200 rounded-xl overflow-hidden">
+      <div className="bg-stone-100 p-2 flex gap-1 border-b border-stone-200">
+        <button
+          type="button"
+          onClick={() => insertTag('h2')}
+          className="p-2 hover:bg-white rounded-lg transition-colors"
+          title="Encabezado"
+        >
+          <Heading2 className="w-4 h-4 text-stone-600" />
+        </button>
+        <button
+          type="button"
+          onClick={() => insertTag('strong')}
+          className="p-2 hover:bg-white rounded-lg transition-colors"
+          title="Negrita"
+        >
+          <Bold className="w-4 h-4 text-stone-600" />
+        </button>
+        <button
+          type="button"
+          onClick={() => insertTag('em')}
+          className="p-2 hover:bg-white rounded-lg transition-colors"
+          title="Cursiva"
+        >
+          <Italic className="w-4 h-4 text-stone-600" />
+        </button>
+        <button
+          type="button"
+          onClick={insertList}
+          className="p-2 hover:bg-white rounded-lg transition-colors"
+          title="Lista"
+        >
+          <List className="w-4 h-4 text-stone-600" />
+        </button>
+        <button
+          type="button"
+          onClick={() => insertTag('a href=""', 'a')}
+          className="p-2 hover:bg-white rounded-lg transition-colors"
+          title="Enlace"
+        >
+          <LinkIcon className="w-4 h-4 text-stone-600" />
+        </button>
+      </div>
+      <textarea
+        id="rich-editor"
+        value={textValue}
+        onChange={handleChange}
+        rows={12}
+        className="w-full p-4 text-sm font-mono resize-none focus:outline-none"
+        placeholder="Escribe el contenido HTML aquí. Usa los botones de arriba para insertar formato."
+      />
+      <div className="bg-stone-50 px-4 py-2 text-xs text-stone-500 border-t border-stone-200">
+        Tip: Puedes usar etiquetas HTML como &lt;h2&gt;, &lt;p&gt;, &lt;strong&gt;, &lt;ul&gt;, &lt;li&gt;
+      </div>
+    </div>
+  );
 };
 
 const AdminDashboard = () => {
@@ -308,11 +414,13 @@ const AdminDashboard = () => {
         data-testid="admin-sidebar"
       >
         <div className="p-6">
-          <img
-            src={CLUSTER_LOGO}
-            alt="Clúster Turismo"
-            className="h-16 brightness-0 invert mb-8"
-          />
+          <div className="bg-white rounded-xl p-3 mb-8 inline-block">
+            <img
+              src={CLUSTER_LOGO}
+              alt="Clúster Turismo"
+              className="h-12"
+            />
+          </div>
 
           <nav className="space-y-2">
             <button
@@ -892,13 +1000,11 @@ const AdminDashboard = () => {
                     <label className="block font-inter font-medium text-sm text-stone-700 mb-2">
                       Contenido *
                     </label>
-                    <ReactQuill
-                      theme="snow"
+                    <RichTextEditor
                       value={articuloForm.contenido}
                       onChange={(value) =>
                         setArticuloForm({ ...articuloForm, contenido: value })
                       }
-                      modules={quillModules}
                       data-testid="articulo-contenido-editor"
                     />
                   </div>
