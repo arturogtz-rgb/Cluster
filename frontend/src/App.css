@@ -1,3 +1,14 @@
+/* Hero logo fade effect */
+.hero-logo-large {
+    transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+.hero-logo-large.scrolled {
+    opacity: 0 !important;
+    transform: translateY(-20px);
+    pointer-events: none;
+}
+
 /* Animation utilities */
 .animate-delay-100 {
     animation-delay: 100ms;

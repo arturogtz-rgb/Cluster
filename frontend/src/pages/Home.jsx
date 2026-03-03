@@ -47,12 +47,24 @@ const STATS = [
 const Home = () => {
   const [empresasDestacadas, setEmpresasDestacadas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [heroLogoHidden, setHeroLogoHidden] = useState(false);
   const [settings, setSettings] = useState({
     hero_image: DEFAULT_HERO_IMAGE,
     hero_title: "Descubre la Aventura",
     hero_subtitle: "Explora las experiencias más emocionantes de turismo de naturaleza y aventura en Jalisco, México"
   });
   const [categorias, setCategorias] = useState(CATEGORY_IMAGES);
+
+  // Scroll listener for hero logo fade
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      setHeroLogoHidden(scrollY > 150);
+    };
+    
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -128,7 +140,7 @@ const Home = () => {
         <div className="absolute bottom-16 left-6 md:left-12 z-20 max-w-4xl">
           {/* Large Logo - visible initially, fades on scroll */}
           <div 
-            className="mb-6 opacity-0 animate-fade-in-up hero-logo-large" 
+            className={`mb-6 opacity-0 animate-fade-in-up hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
             style={{ animationDelay: "200ms", animationFillMode: "forwards" }}
           >
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 inline-block shadow-floating">
