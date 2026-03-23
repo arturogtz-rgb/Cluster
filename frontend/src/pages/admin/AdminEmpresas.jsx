@@ -9,7 +9,6 @@ import {
   Star,
   MapPin,
   Phone,
-  ArrowLeft,
   Search,
   Eye,
   EyeOff,
@@ -70,40 +69,29 @@ const AdminEmpresas = () => {
   });
 
   return (
-    <div className="min-h-screen bg-stone-100">
+    <div className="p-4 lg:p-8">
       {/* Header */}
-      <header className="bg-white border-b border-stone-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <Link
-                to="/admin/dashboard"
-                className="p-2 hover:bg-stone-100 rounded-lg transition-colors"
-              >
-                <ArrowLeft className="w-5 h-5 text-stone-600" />
-              </Link>
-              <div>
-                <h1 className="font-outfit font-bold text-xl text-stone-900">
-                  Empresas
-                </h1>
-                <p className="text-sm text-stone-500">
-                  {filteredEmpresas.length} de {empresas.length} empresas
-                </p>
-              </div>
-            </div>
-            <Link
-              to="/admin/empresas/nueva"
-              className="bg-forest text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-forest-dark transition-colors shadow-lg"
-            >
-              <Plus className="w-4 h-4" />
-              Nueva Empresa
-            </Link>
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div>
+          <h1 className="font-outfit font-bold text-2xl text-stone-900">
+            Empresas
+          </h1>
+          <p className="text-sm text-stone-500 mt-1">
+            {filteredEmpresas.length} de {empresas.length} empresas
+          </p>
         </div>
-      </header>
+        <Link
+          to="/admin/empresas/nueva"
+          data-testid="new-empresa-btn"
+          className="bg-forest text-white px-6 py-2.5 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-forest-dark transition-colors shadow-lg w-fit"
+        >
+          <Plus className="w-4 h-4" />
+          Nueva Empresa
+        </Link>
+      </div>
 
       {/* Filters */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="mb-6">
         <div className="flex flex-col sm:flex-row gap-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-400" />
@@ -131,7 +119,7 @@ const AdminEmpresas = () => {
       </div>
 
       {/* Grid */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
+      <div>
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[1, 2, 3, 4, 5, 6].map((i) => (
