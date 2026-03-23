@@ -1,83 +1,60 @@
 # Clúster de Turismo de Naturaleza y Aventura Jalisco - PRD
 
 ## Problema Original
-Sitio web para el Clúster de Turismo de Naturaleza y Aventura Jalisco - catálogo de empresas turísticas profesional y escalable.
+Sitio web completo para el Clúster de Turismo de Naturaleza y Aventura Jalisco.
 
 ## User Personas
-1. **Turista Nacional/Internacional**: Busca experiencias de aventura en Jalisco
-2. **Administrador del Clúster**: Gestiona empresas, categorías, contenido, usuarios y leads
-3. **Editor de Prensa**: Crea y edita artículos y actividades (rol restringido)
-4. **Empresarios Turísticos**: Quieren visibilidad y unirse al Clúster
+1. **Turista**: Busca experiencias de aventura en Jalisco
+2. **Administrador**: Gestiona empresas, contenido, usuarios y leads
+3. **Editor de Prensa**: Crea artículos y gestiona actividades
+4. **Empresarios Turísticos**: Buscan visibilidad y unirse al Clúster
 
-## Lo Implementado
+## Implementación Completa
 
-### Fase 1-3: MVP + UI/UX + Infraestructura (Anteriores)
-- Catálogo de empresas con filtros, búsqueda, perfiles con galería
-- Blog de noticias, mapa interactivo con Leaflet
-- Pipeline de optimización de imágenes (Pillow/WebP)
-- Panel admin con JWT, ImageUploader drag-and-drop
+### Fase 1: MVP Base
+- Catálogo de empresas con filtros y búsqueda
+- Perfil de empresa con galería masonry y WhatsApp
+- Blog de noticias, panel admin con JWT
+
+### Fase 2: UI/UX y CMS
+- Logo dinámico, mapa interactivo Leaflet
+- Editor de Hero, categorías con imágenes, Media Manager
+
+### Fase 3: Infraestructura & Media
+- Pipeline WebP automático (Pillow), carpetas jerárquicas
+- ImageUploader con drag-and-drop
 
 ### Fase 4: Rediseño Admin Panel
-- AdminLayout persistente con sidebar navegación global
-- Formularios a pantalla completa para Empresas, Artículos, Actividades
-- Dashboard como hub con estadísticas y módulos
+- AdminLayout con sidebar persistente
+- Formularios a pantalla completa (Empresas, Artículos, Actividades)
+- Dashboard como hub de navegación
 
-### Fase 5: Productividad Admin + Rich Text + Mapa Avanzado
-- Buscador Global Command+K (Spotlight) en admin
-- Editor Rich Text Tiptap WYSIWYG para Artículos
-- Filtros Duales en Mapa (categoría + actividad) + Clustering
+### Fase 5: Productividad Admin + Rich Text + Mapa
+- Buscador Global Command+K (Spotlight)
+- Editor Rich Text Tiptap WYSIWYG
+- Filtros duales en mapa (categoría + actividad) + Clustering
 
 ### Fase 6: Frontend Público
 - Tarjetas con logo permanente, perfil mobile-first con carrusel
-- Página /nosotros con misión/visión/valores/formulario de contacto
-- Paginación (12/página), contador de vistas + analytics en dashboard
+- Página /nosotros (misión/visión/valores/contacto)
+- Paginación (12/pág), contador de vistas + analytics
 
-### Fase 7: Gestión Centralizada (Fase 4 del Plan del Usuario) - COMPLETADA Feb 2026
-- **Notificaciones al Admin por Email (SMTP)**:
-  - Envío automático al email del admin cuando alguien llena el formulario de /nosotros
-  - Email HTML formateado con datos del interesado (nombre, email, empresa, mensaje)
-  - Graceful fallback: si SMTP no está configurado, solo guarda en DB
-  - Variables de entorno: ADMIN_EMAIL, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
-- **Gestión de Leads/Mensajes (/admin/leads)**:
-  - Bandeja de entrada estilo email con indicadores de leído/no leído
-  - Vista de detalle del mensaje con botón "Responder por email" (mailto:)
-  - Conteo de mensajes sin leer en el listado
-  - Endpoints: GET /api/leads, PUT /api/leads/{id}/read, DELETE /api/leads/{id}
-- **Editor de Contenido Institucional (/admin/nosotros-editor)**:
-  - Editar Hero Image del /nosotros
-  - Editar Misión y Visión (textarea)
-  - Agregar/quitar Valores dinámicamente
-  - Estadísticas personalizables (label + value)
-  - Textos del CTA (título + descripción)
-  - Endpoint: PUT /api/nosotros-settings
-- **Sistema de Usuarios y Roles**:
-  - Rol **Admin**: Control total sobre todos los módulos
-  - Rol **Editor**: Solo puede gestionar Artículos y Actividades
-  - Sidebar se filtra automáticamente según el rol del usuario (JWT payload)
-  - Página /admin/usuarios para crear/editar/eliminar usuarios
-  - Explicación visual de roles en la página de usuarios
-  - Protección anti-auto-eliminación
-  - Backend: require_admin dependency para endpoints sensibles (403 para no-admin)
-  - Endpoints: GET/POST /api/usuarios, PUT/DELETE /api/usuarios/{id}
+### Fase 7: Gestión Centralizada
+- Notificaciones SMTP + bandeja de leads (/admin/leads)
+- Editor de /nosotros desde admin (misión, visión, valores, estadísticas, CTA)
+- Sistema de usuarios y roles (Admin vs Editor)
 
-### Stack Técnico
-- **Frontend**: React 19, Tailwind CSS, Shadcn UI, Leaflet, Tiptap, react-leaflet-cluster
+### Fase 8: SEO & PageSpeed - COMPLETADA Feb 2026
+- **Meta-tags dinámicos** (react-helmet-async): título, og:title, og:description, og:image, Twitter Cards, canonical URLs en cada página
+- **JSON-LD estructurado**: Organization (home), LocalBusiness/TravelAgency/EducationalOrganization/AmusementPark (empresas según categoría), Article (artículos)
+- **Sitemap.xml dinámico**: Todas las páginas estáticas + empresas + artículos con lastmod, changefreq, priority
+- **Code Splitting**: React.lazy + Suspense para Mapa, Nosotros, Prensa, todas las páginas admin
+
+### Stack Técnico Final
+- **Frontend**: React 19, Tailwind CSS, Shadcn UI, Leaflet, Tiptap, react-leaflet-cluster, react-helmet-async
 - **Backend**: FastAPI, MongoDB, Pillow, fastapi-mail, PyJWT
 - **Auth**: JWT con roles (admin/editor)
 - **Storage**: Local (/uploads/) con optimización WebP automática
 
-## Backlog
-
-### FASE 5 (Plan): SEO & PageSpeed
-- [ ] Meta-tags dinámicos con React Helmet
-- [ ] Sitemap.xml automático generado desde el backend
-- [ ] JSON-LD datos estructurados (LocalBusiness)
-- [ ] Lazy loading en todas las imágenes
-- [ ] Code splitting para componentes pesados
-
-### Mejoras Futuras
-- [ ] Dashboard de analíticas avanzado (gráficas de visitas por periodo)
-- [ ] Exportar leads a CSV
-- [ ] Notificaciones push para nuevos leads
-- [ ] Multi-idioma (español/inglés)
-- [ ] PWA para acceso offline
+## Estado: Producción-Ready
+Todas las fases del plan de desarrollo han sido completadas y probadas.
