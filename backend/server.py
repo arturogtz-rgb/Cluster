@@ -323,7 +323,58 @@ async def get_empresa(slug: str):
     if isinstance(empresa.get('updated_at'), str):
         empresa['updated_at'] = datetime.fromisoformat(empresa['updated_at'])
     
+    # Increment views counter
+    await db.empresas.update_one({"slug": slug}, {"$inc": {"views": 1}})
+    
     return empresa
+
+@api_router.get("/empresas-top-views")
+async def get_top_viewed_empresas():
+    """Get top 5 most viewed empresas for admin dashboard"""
+    empresas = await db.empresas.find(
+        {"activa": True},
+        {"_id": 0, "nombre": 1, "slug": 1, "views": 1, "categoria": 1, "logo_url": 1}
+    ).sort("views", -1).limit(5).to_list(5)
+    for e in empresas:
+        e.setdefault("views", 0)
+    return empresas
+
+@api_router.get("/nosotros-settings")
+async def get_nosotros_settings():
+    settings = await db.settings.find_one({"id": "nosotros_settings"}, {"_id": 0})
+    if not settings:
+        return {
+            "mision": "Impulsar el desarrollo sustentable y la profesionalización del turismo de naturaleza en Jalisco, conectando a viajeros conscientes con experiencias auténticas en nuestras montañas, costas y bosques.",
+            "vision": "Ser el referente nacional en turismo de aventura, posicionando a Jalisco como un destino seguro, diverso y líder en conservación ambiental.",
+            "valores": ["Sustentabilidad", "Seguridad", "Comunidad", "Pasión por la Tierra"],
+            "cta_titulo": "¿Quieres unirte al Clúster?",
+            "cta_texto": "Si tu empresa ofrece servicios de turismo de naturaleza y aventura en Jalisco, te invitamos a formar parte de nuestra red.",
+        }
+    return settings
+
+@api_router.put("/nosotros-settings")
+async def update_nosotros_settings(data: dict, user = Depends(get_current_user)):
+    data["id"] = "nosotros_settings"
+    await db.settings.update_one(
+        {"id": "nosotros_settings"},
+        {"$set": data},
+        upsert=True
+    )
+    return {"status": "ok"}
+
+@api_router.post("/contacto")
+async def submit_contacto(data: dict):
+    """Save contact form submission"""
+    doc = {
+        "id": str(uuid.uuid4()),
+        "nombre": data.get("nombre", ""),
+        "email": data.get("email", ""),
+        "empresa": data.get("empresa", ""),
+        "mensaje": data.get("mensaje", ""),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    await db.contactos.insert_one(doc)
+    return {"status": "ok", "message": "Mensaje enviado correctamente"}
 
 @api_router.post("/empresas", response_model=Empresa)
 async def create_empresa(data: EmpresaCreate, user = Depends(get_current_user)):

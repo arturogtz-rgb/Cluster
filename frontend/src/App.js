@@ -9,6 +9,7 @@ import EmpresaDetalle from "./pages/EmpresaDetalle";
 import Prensa from "./pages/Prensa";
 import ArticuloDetalle from "./pages/ArticuloDetalle";
 import Mapa from "./pages/Mapa";
+import Nosotros from "./pages/Nosotros";
 
 // Admin Pages
 import AdminLogin from "./pages/admin/AdminLogin";
@@ -90,6 +91,16 @@ function App() {
               <>
                 <FloatingNav />
                 <Mapa />
+                <WhatsAppButton />
+              </>
+            }
+          />
+          <Route
+            path="/nosotros"
+            element={
+              <>
+                <FloatingNav />
+                <Nosotros />
                 <WhatsAppButton />
               </>
             }

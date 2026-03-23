@@ -10,6 +10,7 @@ import {
   Settings,
   ArrowRight,
   TrendingUp,
+  Eye,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -23,6 +24,7 @@ const AdminDashboard = () => {
     categorias: 0,
     media: 0,
   });
+  const [topViewed, setTopViewed] = useState([]);
   const [loading, setLoading] = useState(true);
   const token = localStorage.getItem("auth_token");
 
@@ -36,13 +38,14 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const [empresasRes, articulosRes, actividadesRes, categoriasRes, mediaRes] =
+      const [empresasRes, articulosRes, actividadesRes, categoriasRes, mediaRes, topViewedRes] =
         await Promise.all([
           axios.get(`${API}/empresas`),
           axios.get(`${API}/articulos`, { headers: { Authorization: `Bearer ${token}` } }),
           axios.get(`${API}/actividades`),
           axios.get(`${API}/categorias`),
           axios.get(`${API}/media`, { headers: { Authorization: `Bearer ${token}` } }).catch(() => ({ data: [] })),
+          axios.get(`${API}/empresas-top-views`).catch(() => ({ data: [] })),
         ]);
       setStats({
         empresas: empresasRes.data.length,
@@ -51,6 +54,7 @@ const AdminDashboard = () => {
         categorias: categoriasRes.data?.categorias?.length || 0,
         media: mediaRes.data?.length || 0,
       });
+      setTopViewed(topViewedRes.data || []);
     } catch (error) {
       console.error("Error fetching stats:", error);
     } finally {
@@ -203,6 +207,55 @@ const AdminDashboard = () => {
               </Link>
             );
           })}
+        </div>
+      )}
+
+      {/* Top Viewed Empresas */}
+      {!loading && topViewed.length > 0 && (
+        <div className="mt-10">
+          <h2 className="font-outfit font-bold text-lg text-stone-900 mb-4 flex items-center gap-2">
+            <Eye className="w-5 h-5 text-forest" />
+            Empresas Más Visitadas
+          </h2>
+          <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+            <div className="divide-y divide-stone-100">
+              {topViewed.map((empresa, i) => (
+                <Link
+                  key={empresa.slug}
+                  to={`/admin/empresas/editar/${empresa.slug}`}
+                  className="flex items-center gap-4 px-6 py-4 hover:bg-stone-50 transition-colors"
+                  data-testid={`top-viewed-${empresa.slug}`}
+                >
+                  <span className="w-8 h-8 rounded-full bg-forest/10 flex items-center justify-center font-outfit font-bold text-forest text-sm">
+                    {i + 1}
+                  </span>
+                  {empresa.logo_url ? (
+                    <img
+                      src={empresa.logo_url}
+                      alt=""
+                      className="w-10 h-10 rounded-lg object-contain bg-stone-50"
+                    />
+                  ) : (
+                    <div className="w-10 h-10 rounded-lg bg-forest/10 flex items-center justify-center">
+                      <Building2 className="w-5 h-5 text-forest" />
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="font-outfit font-bold text-stone-900 text-sm truncate">
+                      {empresa.nombre}
+                    </p>
+                    <p className="text-xs text-stone-500">{empresa.categoria}</p>
+                  </div>
+                  <div className="flex items-center gap-1 text-stone-500">
+                    <Eye className="w-4 h-4" />
+                    <span className="font-outfit font-bold text-sm">
+                      {empresa.views || 0}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

@@ -38,8 +38,9 @@ const FloatingNav = () => {
   const navLinks = [
     { href: "/", label: "Inicio" },
     { href: "/empresas", label: "Empresas" },
-    { href: "/prensa", label: "Prensa" },
     { href: "/mapa", label: "Mapa" },
+    { href: "/prensa", label: "Prensa" },
+    { href: "/nosotros", label: "Nosotros" },
   ];
 
   const isActive = (href) => {
