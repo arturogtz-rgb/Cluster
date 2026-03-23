@@ -26,7 +26,9 @@ import {
   Upload,
   Tag,
   Check,
+  Loader2,
 } from "lucide-react";
+import ImageUploader from "../../components/ImageUploader";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -655,26 +657,14 @@ const AdminDashboard = () => {
                   <h3 className="font-outfit font-bold text-lg mb-6">Configuración del Hero</h3>
                   <div className="space-y-6">
                     <div>
-                      <label className="block font-inter font-medium text-sm text-stone-700 mb-2">Imagen de fondo</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={settings.hero_image}
-                          onChange={(e) => setSettings({ ...settings, hero_image: e.target.value })}
-                          className="flex-1 px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:border-forest"
-                          placeholder="URL de la imagen"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => openMediaPicker("settings_hero")}
-                          className="px-4 py-3 bg-stone-100 rounded-xl hover:bg-stone-200 transition-colors"
-                        >
-                          <ImageIcon className="w-5 h-5 text-stone-600" />
-                        </button>
-                      </div>
-                      {settings.hero_image && (
-                        <img src={settings.hero_image} alt="Preview" className="mt-2 h-32 w-full object-cover rounded-xl" />
-                      )}
+                      <ImageUploader
+                        value={settings.hero_image}
+                        onChange={(url) => setSettings({ ...settings, hero_image: url })}
+                        category="system"
+                        imageType="hero"
+                        label="Imagen de fondo del Hero"
+                        token={token}
+                      />
                     </div>
                     <div>
                       <label className="block font-inter font-medium text-sm text-stone-700 mb-2">Título principal</label>
@@ -742,20 +732,26 @@ const AdminDashboard = () => {
                     <textarea required rows={4} value={empresaForm.descripcion} onChange={(e) => setEmpresaForm({ ...empresaForm, descripcion: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:border-forest resize-none" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block font-inter font-medium text-sm text-stone-700 mb-2">URL del Logo</label>
-                      <div className="flex gap-2">
-                        <input type="url" value={empresaForm.logo_url} onChange={(e) => setEmpresaForm({ ...empresaForm, logo_url: e.target.value })} className="flex-1 px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:border-forest" placeholder="https://..." />
-                        <button type="button" onClick={() => openMediaPicker("empresa_logo")} className="px-3 bg-stone-100 rounded-xl hover:bg-stone-200"><ImageIcon className="w-5 h-5 text-stone-600" /></button>
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block font-inter font-medium text-sm text-stone-700 mb-2">URL Imagen Hero</label>
-                      <div className="flex gap-2">
-                        <input type="url" value={empresaForm.hero_url} onChange={(e) => setEmpresaForm({ ...empresaForm, hero_url: e.target.value })} className="flex-1 px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:border-forest" placeholder="https://..." />
-                        <button type="button" onClick={() => openMediaPicker("empresa_hero")} className="px-3 bg-stone-100 rounded-xl hover:bg-stone-200"><ImageIcon className="w-5 h-5 text-stone-600" /></button>
-                      </div>
-                    </div>
+                    <ImageUploader
+                      value={empresaForm.logo_url}
+                      onChange={(url) => setEmpresaForm({ ...empresaForm, logo_url: url })}
+                      category="empresas"
+                      entitySlug={editingItem?.slug || "nuevo"}
+                      subfolder="logo"
+                      imageType="logo"
+                      label="Logo de la Empresa"
+                      token={token}
+                    />
+                    <ImageUploader
+                      value={empresaForm.hero_url}
+                      onChange={(url) => setEmpresaForm({ ...empresaForm, hero_url: url })}
+                      category="empresas"
+                      entitySlug={editingItem?.slug || "nuevo"}
+                      subfolder="hero"
+                      imageType="hero"
+                      label="Imagen Hero"
+                      token={token}
+                    />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -825,13 +821,15 @@ const AdminDashboard = () => {
                     <label className="block font-inter font-medium text-sm text-stone-700 mb-2">Resumen *</label>
                     <textarea required rows={3} value={articuloForm.resumen} onChange={(e) => setArticuloForm({ ...articuloForm, resumen: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:border-forest resize-none" />
                   </div>
-                  <div>
-                    <label className="block font-inter font-medium text-sm text-stone-700 mb-2">URL Imagen Hero</label>
-                    <div className="flex gap-2">
-                      <input type="url" value={articuloForm.hero_url} onChange={(e) => setArticuloForm({ ...articuloForm, hero_url: e.target.value })} className="flex-1 px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:border-forest" />
-                      <button type="button" onClick={() => openMediaPicker("articulo_hero")} className="px-3 bg-stone-100 rounded-xl hover:bg-stone-200"><ImageIcon className="w-5 h-5 text-stone-600" /></button>
-                    </div>
-                  </div>
+                  <ImageUploader
+                    value={articuloForm.hero_url}
+                    onChange={(url) => setArticuloForm({ ...articuloForm, hero_url: url })}
+                    category="articulos"
+                    entitySlug={editingItem?.slug || "nuevo"}
+                    imageType="hero"
+                    label="Imagen Hero del Artículo"
+                    token={token}
+                  />
                   <div>
                     <label className="block font-inter font-medium text-sm text-stone-700 mb-2">Contenido *</label>
                     <RichTextEditor value={articuloForm.contenido} onChange={(value) => setArticuloForm({ ...articuloForm, contenido: value })} />
@@ -853,13 +851,15 @@ const AdminDashboard = () => {
                     <label className="block font-inter font-medium text-sm text-stone-700 mb-2">Descripción</label>
                     <textarea rows={3} value={categoriaForm.descripcion} onChange={(e) => setCategoriaForm({ ...categoriaForm, descripcion: e.target.value })} className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:border-forest resize-none" />
                   </div>
-                  <div>
-                    <label className="block font-inter font-medium text-sm text-stone-700 mb-2">Imagen</label>
-                    <div className="flex gap-2">
-                      <input type="url" value={categoriaForm.imagen_url} onChange={(e) => setCategoriaForm({ ...categoriaForm, imagen_url: e.target.value })} className="flex-1 px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:border-forest" />
-                      <button type="button" onClick={() => openMediaPicker("categoria_imagen")} className="px-3 bg-stone-100 rounded-xl hover:bg-stone-200"><ImageIcon className="w-5 h-5 text-stone-600" /></button>
-                    </div>
-                  </div>
+                  <ImageUploader
+                    value={categoriaForm.imagen_url}
+                    onChange={(url) => setCategoriaForm({ ...categoriaForm, imagen_url: url })}
+                    category="categorias"
+                    entitySlug={editingItem?.slug || "nuevo"}
+                    imageType="card"
+                    label="Imagen de la Categoría"
+                    token={token}
+                  />
                   <div>
                     <label className="block font-inter font-medium text-sm text-stone-700 mb-2">Orden</label>
                     <input type="number" value={categoriaForm.orden} onChange={(e) => setCategoriaForm({ ...categoriaForm, orden: parseInt(e.target.value) || 0 })} className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:border-forest" />

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File
+from fastapi import FastAPI, APIRouter, HTTPException, Depends, status, UploadFile, File, Form
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.staticfiles import StaticFiles
 from dotenv import load_dotenv
@@ -16,6 +16,8 @@ import jwt
 from slugify import slugify
 import shutil
 import aiofiles
+from PIL import Image
+import io
 
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
@@ -519,40 +521,157 @@ async def update_settings(data: SiteSettingsUpdate, user = Depends(get_current_u
     
     return settings
 
-# ==================== MEDIA UPLOAD ====================
+# ==================== MEDIA UPLOAD WITH OPTIMIZATION PIPELINE ====================
 
 UPLOAD_DIR = ROOT_DIR / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+# Create organized folder structure
+MEDIA_FOLDERS = {
+    "system": UPLOAD_DIR / "system",
+    "empresas": UPLOAD_DIR / "empresas",
+    "articulos": UPLOAD_DIR / "articulos",
+    "actividades": UPLOAD_DIR / "actividades",
+    "categorias": UPLOAD_DIR / "categorias",
+}
+for folder in MEDIA_FOLDERS.values():
+    folder.mkdir(exist_ok=True)
+
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 
+# Image optimization settings
+IMAGE_SIZES = {
+    "hero": 1920,      # Hero images max width
+    "card": 800,       # Card/thumbnail images
+    "logo": 400,       # Logos
+    "galeria": 1200,   # Gallery images
+    "icon": 200,       # Icons/small images
+}
+WEBP_QUALITY = 85
+
+def optimize_image(image_data: bytes, max_width: int = 1920, quality: int = WEBP_QUALITY) -> tuple[bytes, str]:
+    """
+    Optimize image: resize if needed, convert to WebP, compress.
+    Returns (optimized_bytes, new_extension)
+    """
+    try:
+        img = Image.open(io.BytesIO(image_data))
+        
+        # Convert to RGB if necessary (for PNG with transparency, keep RGBA)
+        if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+            # Keep alpha channel for transparency
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+        else:
+            img = img.convert('RGB')
+        
+        # Resize if wider than max_width
+        if img.width > max_width:
+            ratio = max_width / img.width
+            new_height = int(img.height * ratio)
+            img = img.resize((max_width, new_height), Image.Resampling.LANCZOS)
+        
+        # Save as WebP
+        output = io.BytesIO()
+        if img.mode == 'RGBA':
+            img.save(output, format='WEBP', quality=quality, method=6)
+        else:
+            img.save(output, format='WEBP', quality=quality, method=6)
+        
+        return output.getvalue(), '.webp'
+    except Exception as e:
+        logging.error(f"Image optimization failed: {e}")
+        # Return original if optimization fails
+        return image_data, None
+
+def get_upload_folder(category: str, entity_slug: str = None, subfolder: str = None) -> Path:
+    """Get the appropriate upload folder based on category and entity."""
+    base = MEDIA_FOLDERS.get(category, UPLOAD_DIR / "system")
+    
+    if entity_slug:
+        folder = base / entity_slug
+        if subfolder:
+            folder = folder / subfolder
+    else:
+        folder = base
+    
+    folder.mkdir(parents=True, exist_ok=True)
+    return folder
+
 @api_router.get("/media", response_model=List[MediaFile])
-async def get_media_files(user = Depends(get_current_user)):
-    files = await db.media.find({}, {"_id": 0}).sort("created_at", -1).to_list(1000)
+async def get_media_files(
+    category: Optional[str] = None,
+    entity_slug: Optional[str] = None,
+    user = Depends(get_current_user)
+):
+    """Get media files, optionally filtered by category and entity."""
+    query = {}
+    if category:
+        query["category"] = category
+    if entity_slug:
+        query["entity_slug"] = entity_slug
+    
+    files = await db.media.find(query, {"_id": 0}).sort("created_at", -1).to_list(1000)
     for f in files:
         if isinstance(f.get('created_at'), str):
             f['created_at'] = datetime.fromisoformat(f['created_at'])
     return files
 
-@api_router.post("/media/upload", response_model=MediaFile)
-async def upload_file(file: UploadFile = File(...), user = Depends(get_current_user)):
+@api_router.post("/media/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+    category: str = Form(default="system"),
+    entity_slug: str = Form(default=""),
+    subfolder: str = Form(default=""),
+    image_type: str = Form(default="card"),
+    user = Depends(get_current_user)
+):
+    """
+    Upload and optimize image file.
+    
+    - category: system, empresas, articulos, actividades, categorias
+    - entity_slug: slug of the entity (empresa, articulo, etc.)
+    - subfolder: logo, hero, galeria (for empresas)
+    - image_type: hero, card, logo, galeria, icon (determines max width)
+    """
     # Validate file extension
     file_ext = Path(file.filename).suffix.lower()
     if file_ext not in ALLOWED_EXTENSIONS:
-        raise HTTPException(status_code=400, detail=f"Tipo de archivo no permitido. Permitidos: {', '.join(ALLOWED_EXTENSIONS)}")
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Tipo de archivo no permitido. Permitidos: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+    
+    # Read file content
+    content = await file.read()
+    if len(content) > MAX_FILE_SIZE:
+        raise HTTPException(status_code=400, detail="Archivo demasiado grande. Máximo 10MB")
+    
+    # Optimize image (skip for SVG and GIF)
+    original_size = len(content)
+    if file_ext not in {'.svg', '.gif'}:
+        max_width = IMAGE_SIZES.get(image_type, 1200)
+        optimized_content, new_ext = optimize_image(content, max_width)
+        if new_ext:
+            content = optimized_content
+            file_ext = new_ext
     
     # Generate unique filename
     unique_id = str(uuid.uuid4())[:8]
     safe_name = slugify(Path(file.filename).stem, lowercase=True)
     new_filename = f"{safe_name}_{unique_id}{file_ext}"
-    file_path = UPLOAD_DIR / new_filename
+    
+    # Get appropriate folder
+    upload_folder = get_upload_folder(category, entity_slug or None, subfolder or None)
+    file_path = upload_folder / new_filename
+    
+    # Build relative URL path
+    relative_path = file_path.relative_to(UPLOAD_DIR)
+    url = f"/api/uploads/{relative_path.as_posix()}"
     
     # Save file
     try:
-        content = await file.read()
-        if len(content) > MAX_FILE_SIZE:
-            raise HTTPException(status_code=400, detail="Archivo demasiado grande. Máximo 10MB")
-        
         async with aiofiles.open(file_path, 'wb') as f:
             await f.write(content)
     except Exception as e:
@@ -562,16 +681,33 @@ async def upload_file(file: UploadFile = File(...), user = Depends(get_current_u
     media_file = MediaFile(
         filename=new_filename,
         original_name=file.filename,
-        url=f"/api/uploads/{new_filename}",
+        url=url,
         size=len(content),
-        mime_type=file.content_type or "application/octet-stream"
+        mime_type="image/webp" if file_ext == '.webp' else (file.content_type or "application/octet-stream")
     )
     
+    # Add category info to record
     doc = media_file.model_dump()
     doc['created_at'] = doc['created_at'].isoformat()
+    doc['category'] = category
+    doc['entity_slug'] = entity_slug
+    doc['subfolder'] = subfolder
+    doc['original_size'] = original_size
+    doc['optimized_size'] = len(content)
+    doc['compression_ratio'] = round((1 - len(content) / original_size) * 100, 1) if original_size > 0 else 0
+    
     await db.media.insert_one(doc)
     
-    return media_file
+    # Return response with optimization info
+    return {
+        **media_file.model_dump(),
+        "category": category,
+        "entity_slug": entity_slug,
+        "original_size": original_size,
+        "optimized_size": len(content),
+        "compression_ratio": doc['compression_ratio'],
+        "message": f"Imagen optimizada. Reducción: {doc['compression_ratio']}%"
+    }
 
 @api_router.delete("/media/{file_id}")
 async def delete_media(file_id: str, user = Depends(get_current_user)):
@@ -579,12 +715,13 @@ async def delete_media(file_id: str, user = Depends(get_current_user)):
     if not media:
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
     
-    # Delete file from disk
-    file_path = UPLOAD_DIR / media["filename"]
+    # Build full path from URL
+    url_path = media.get("url", "").replace("/api/uploads/", "")
+    file_path = UPLOAD_DIR / url_path
+    
     if file_path.exists():
         file_path.unlink()
     
-    # Delete from database
     await db.media.delete_one({"id": file_id})
     return {"message": "Archivo eliminado"}
 

@@ -3,7 +3,9 @@
 import requests
 import sys
 import json
+import io
 from datetime import datetime
+from PIL import Image
 
 class TourismClusterAPITester:
     def __init__(self, base_url="https://tourism-cluster-mx.preview.emergentagent.com/api"):
@@ -230,10 +232,10 @@ class TourismClusterAPITester:
             return False
 
     def run_all_tests(self):
-        """Run all API tests"""
-        print("🚀 Starting Tourism Cluster API Tests")
+        """Run all API tests including FASE 1 image upload tests"""
+        print("🚀 Starting Tourism Cluster API Tests (Including FASE 1 Image Upload)")
         print(f"📡 Testing API at: {self.base_url}")
-        print("=" * 60)
+        print("=" * 80)
         
         # Basic health check
         if not self.test_health_check():
@@ -268,10 +270,21 @@ class TourismClusterAPITester:
         # Protected endpoints (if login succeeded)
         if login_success:
             self.test_protected_endpoint()
+            
+            # New FASE 1 Image Upload Tests (require authentication)
+            print("\n🖼️ FASE 1 Image Upload Pipeline Tests")
+            print("-" * 50)
+            self.test_image_upload_basic()
+            self.test_image_upload_webp_optimization()
+            self.test_folder_structure()
+            self.test_media_list_api()
         
         # Print final results
-        print("=" * 60)
-        print(f"📊 Test Results: {self.tests_passed}/{self.tests_run} passed")
+        print("\n📊 Test Summary")
+        print("=" * 40)
+        print(f"Total tests: {self.tests_run}")
+        print(f"Passed: {self.tests_passed}")
+        print(f"Failed: {len(self.failed_tests)}")
         
         if self.failed_tests:
             print("\n❌ Failed Tests:")
@@ -282,6 +295,214 @@ class TourismClusterAPITester:
         print(f"✅ Success Rate: {success_rate:.1f}%")
         
         return success_rate >= 80
+
+    def create_test_image(self, width=800, height=600, format='PNG'):
+        """Create a test image in memory"""
+        img = Image.new('RGB', (width, height), color='red')
+        img_buffer = io.BytesIO()
+        img.save(img_buffer, format=format)
+        img_buffer.seek(0)
+        return img_buffer
+
+    def test_image_upload_basic(self):
+        """Test basic image upload functionality"""
+        if not self.token:
+            self.log_test("Image Upload - Basic", False, "No auth token available")
+            return False
+            
+        try:
+            test_image = self.create_test_image(800, 600, 'PNG')
+            
+            files = {'file': ('test_image.png', test_image, 'image/png')}
+            data = {
+                'category': 'system',
+                'entity_slug': 'test',
+                'subfolder': 'test',
+                'image_type': 'card'
+            }
+            
+            response = requests.post(
+                f"{self.base_url}/media/upload",
+                data=data,
+                files=files,
+                headers={'Authorization': f'Bearer {self.token}'},
+                timeout=30
+            )
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                result = response.json()
+                details += f", Compression: {result.get('compression_ratio', 0)}%"
+                details += f", URL: {result.get('url', 'N/A')}"
+            else:
+                try:
+                    details += f", Error: {response.json()}"
+                except:
+                    details += f", Response: {response.text}"
+            
+            self.log_test("Image Upload - Basic", success, details)
+            return success
+            
+        except Exception as e:
+            self.log_test("Image Upload - Basic", False, f"Exception: {str(e)}")
+            return False
+
+    def test_image_upload_webp_optimization(self):
+        """Test WebP optimization pipeline"""
+        if not self.token:
+            self.log_test("Image Upload - WebP Optimization", False, "No auth token available")
+            return False
+            
+        try:
+            # Create a large PNG image to test compression
+            test_image = self.create_test_image(1920, 1080, 'PNG')
+            
+            files = {'file': ('large_test.png', test_image, 'image/png')}
+            data = {
+                'category': 'empresas',
+                'entity_slug': 'test-empresa',
+                'subfolder': 'hero',
+                'image_type': 'hero'
+            }
+            
+            response = requests.post(
+                f"{self.base_url}/media/upload",
+                data=data,
+                files=files,
+                headers={'Authorization': f'Bearer {self.token}'},
+                timeout=30
+            )
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                result = response.json()
+                compression_ratio = result.get('compression_ratio', 0)
+                url = result.get('url', '')
+                details += f", Compression: {compression_ratio}%"
+                
+                # Check if image was optimized
+                if '.webp' in url or compression_ratio > 0:
+                    details += ", WebP optimization: ✅"
+                else:
+                    details += ", WebP optimization: ⚠️"
+            else:
+                try:
+                    details += f", Error: {response.json()}"
+                except:
+                    details += f", Response: {response.text}"
+            
+            self.log_test("Image Upload - WebP Optimization", success, details)
+            return success
+            
+        except Exception as e:
+            self.log_test("Image Upload - WebP Optimization", False, f"Exception: {str(e)}")
+            return False
+
+    def test_folder_structure(self):
+        """Test hierarchical folder structure creation"""
+        if not self.token:
+            self.log_test("Image Upload - Folder Structure", False, "No auth token available")
+            return False
+            
+        test_cases = [
+            {
+                'category': 'empresas',
+                'entity_slug': 'test-empresa',
+                'subfolder': 'logo',
+                'name': 'Empresas Logo'
+            },
+            {
+                'category': 'articulos', 
+                'entity_slug': 'test-articulo',
+                'subfolder': 'hero',
+                'name': 'Articulos Hero'
+            },
+            {
+                'category': 'system',
+                'entity_slug': '',
+                'subfolder': '',
+                'name': 'System Default'
+            }
+        ]
+        
+        all_success = True
+        for test_case in test_cases:
+            try:
+                test_image = self.create_test_image(400, 300, 'JPEG')
+                files = {'file': (f'folder_test.jpg', test_image, 'image/jpeg')}
+                data = {
+                    'category': test_case['category'],
+                    'entity_slug': test_case['entity_slug'],
+                    'subfolder': test_case['subfolder'],
+                    'image_type': 'card'
+                }
+                
+                response = requests.post(
+                    f"{self.base_url}/media/upload",
+                    data=data,
+                    files=files,
+                    headers={'Authorization': f'Bearer {self.token}'},
+                    timeout=30
+                )
+                
+                success = response.status_code == 200
+                details = f"Status: {response.status_code}"
+                
+                if success:
+                    result = response.json()
+                    url = result.get('url', '')
+                    details += f", URL contains category: {test_case['category'] in url}"
+                else:
+                    all_success = False
+                    try:
+                        details += f", Error: {response.json()}"
+                    except:
+                        details += f", Response: {response.text}"
+                
+                self.log_test(f"Folder Structure - {test_case['name']}", success, details)
+                
+            except Exception as e:
+                all_success = False
+                self.log_test(f"Folder Structure - {test_case['name']}", False, f"Exception: {str(e)}")
+        
+        return all_success
+
+    def test_media_list_api(self):
+        """Test media listing API"""
+        if not self.token:
+            self.log_test("Media List API", False, "No auth token available")
+            return False
+            
+        try:
+            response = requests.get(
+                f"{self.base_url}/media",
+                headers={'Authorization': f'Bearer {self.token}'},
+                timeout=10
+            )
+            
+            success = response.status_code == 200
+            details = f"Status: {response.status_code}"
+            
+            if success:
+                result = response.json()
+                media_count = len(result) if isinstance(result, list) else 0
+                details += f", Media files found: {media_count}"
+            else:
+                try:
+                    details += f", Error: {response.json()}"
+                except:
+                    details += f", Response: {response.text}"
+            
+            self.log_test("Media List API", success, details)
+            return success
+            
+        except Exception as e:
+            self.log_test("Media List API", False, f"Exception: {str(e)}")
+            return False
 
 def main():
     """Main test execution"""
