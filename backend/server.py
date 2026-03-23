@@ -151,6 +151,10 @@ class Usuario(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     username: str
     password_hash: str
+    nombre: str = ""
+    email: str = ""
+    role: str = "admin"  # "admin" or "editor"
+    activo: bool = True
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class LoginRequest(BaseModel):
@@ -248,10 +252,11 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, password_hash: str) -> bool:
     return bcrypt.checkpw(password.encode(), password_hash.encode())
 
-def create_token(user_id: str, username: str) -> str:
+def create_token(user_id: str, username: str, role: str = "admin") -> str:
     payload = {
         "user_id": user_id,
         "username": username,
+        "role": role,
         "exp": datetime.now(timezone.utc).timestamp() + 86400  # 24 hours
     }
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -265,6 +270,73 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Token inválido")
 
+async def require_admin(user = Depends(get_current_user)):
+    if user.get("role", "admin") != "admin":
+        raise HTTPException(status_code=403, detail="Acceso denegado: se requiere rol de administrador")
+    return user
+
+# ==================== EMAIL HELPER ====================
+
+async def send_contact_email(lead_data: dict):
+    """Send email notification for new contact form submission"""
+    admin_email = os.environ.get("ADMIN_EMAIL", "")
+    smtp_host = os.environ.get("SMTP_HOST", "")
+    smtp_user = os.environ.get("SMTP_USER", "")
+    smtp_password = os.environ.get("SMTP_PASSWORD", "")
+    
+    if not all([admin_email, smtp_host, smtp_user, smtp_password]):
+        logging.info("SMTP not configured - skipping email notification")
+        return False
+    
+    try:
+        from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+        
+        conf = ConnectionConfig(
+            MAIL_USERNAME=smtp_user,
+            MAIL_PASSWORD=smtp_password,
+            MAIL_FROM=smtp_user,
+            MAIL_PORT=int(os.environ.get("SMTP_PORT", 587)),
+            MAIL_SERVER=smtp_host,
+            MAIL_STARTTLS=True,
+            MAIL_SSL_TLS=False,
+            USE_CREDENTIALS=True,
+        )
+        
+        html_body = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: #1a4d2e; color: white; padding: 20px; text-align: center; border-radius: 12px 12px 0 0;">
+                <h2 style="margin: 0;">Nuevo mensaje de contacto</h2>
+                <p style="margin: 5px 0 0; opacity: 0.8;">Clúster de Turismo de Naturaleza y Aventura Jalisco</p>
+            </div>
+            <div style="padding: 24px; background: #f5f5f4; border-radius: 0 0 12px 12px;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <tr><td style="padding: 8px 0; font-weight: bold; color: #44403c;">Nombre:</td><td style="padding: 8px 0; color: #1c1917;">{lead_data.get('nombre', '')}</td></tr>
+                    <tr><td style="padding: 8px 0; font-weight: bold; color: #44403c;">Email:</td><td style="padding: 8px 0; color: #1c1917;">{lead_data.get('email', '')}</td></tr>
+                    <tr><td style="padding: 8px 0; font-weight: bold; color: #44403c;">Empresa:</td><td style="padding: 8px 0; color: #1c1917;">{lead_data.get('empresa', 'No especificada')}</td></tr>
+                </table>
+                <div style="margin-top: 16px; padding: 16px; background: white; border-radius: 8px; border-left: 4px solid #1a4d2e;">
+                    <p style="margin: 0; font-weight: bold; color: #44403c;">Mensaje:</p>
+                    <p style="margin: 8px 0 0; color: #1c1917;">{lead_data.get('mensaje', '')}</p>
+                </div>
+            </div>
+        </div>
+        """
+        
+        message = MessageSchema(
+            subject=f"Nuevo contacto: {lead_data.get('nombre', 'Sin nombre')}",
+            recipients=[admin_email],
+            body=html_body,
+            subtype="html",
+        )
+        
+        fm = FastMail(conf)
+        await fm.send_message(message)
+        logging.info(f"Email sent to {admin_email}")
+        return True
+    except Exception as e:
+        logging.error(f"Failed to send email: {e}")
+        return False
+
 # ==================== AUTH ROUTES ====================
 
 @api_router.post("/auth/login", response_model=LoginResponse)
@@ -272,13 +344,16 @@ async def login(request: LoginRequest):
     user = await db.usuarios.find_one({"username": request.username}, {"_id": 0})
     if not user or not verify_password(request.password, user["password_hash"]):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
+    if not user.get("activo", True):
+        raise HTTPException(status_code=401, detail="Usuario desactivado")
     
-    token = create_token(user["id"], user["username"])
+    role = user.get("role", "admin")
+    token = create_token(user["id"], user["username"], role)
     return LoginResponse(token=token, username=user["username"])
 
 @api_router.get("/auth/me")
 async def get_me(user = Depends(get_current_user)):
-    return {"username": user["username"], "user_id": user["user_id"]}
+    return {"username": user["username"], "user_id": user["user_id"], "role": user.get("role", "admin")}
 
 # ==================== EMPRESAS ROUTES ====================
 
@@ -364,17 +439,90 @@ async def update_nosotros_settings(data: dict, user = Depends(get_current_user))
 
 @api_router.post("/contacto")
 async def submit_contacto(data: dict):
-    """Save contact form submission"""
+    """Save contact form submission and send email notification"""
     doc = {
         "id": str(uuid.uuid4()),
         "nombre": data.get("nombre", ""),
         "email": data.get("email", ""),
         "empresa": data.get("empresa", ""),
         "mensaje": data.get("mensaje", ""),
+        "leido": False,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     await db.contactos.insert_one(doc)
+    
+    # Send email notification (non-blocking, doesn't fail the request)
+    try:
+        await send_contact_email(doc)
+    except Exception as e:
+        logging.error(f"Email notification error: {e}")
+    
     return {"status": "ok", "message": "Mensaje enviado correctamente"}
+
+@api_router.get("/leads")
+async def get_leads(user = Depends(require_admin)):
+    leads = await db.contactos.find({}, {"_id": 0}).sort("created_at", -1).to_list(100)
+    return leads
+
+@api_router.put("/leads/{lead_id}/read")
+async def mark_lead_read(lead_id: str, user = Depends(require_admin)):
+    await db.contactos.update_one({"id": lead_id}, {"$set": {"leido": True}})
+    return {"status": "ok"}
+
+@api_router.delete("/leads/{lead_id}")
+async def delete_lead(lead_id: str, user = Depends(require_admin)):
+    await db.contactos.delete_one({"id": lead_id})
+    return {"status": "ok"}
+
+# ==================== USUARIOS ROUTES ====================
+
+@api_router.get("/usuarios")
+async def get_usuarios(user = Depends(require_admin)):
+    usuarios = await db.usuarios.find({}, {"_id": 0, "password_hash": 0}).to_list(50)
+    return usuarios
+
+@api_router.post("/usuarios")
+async def create_usuario(data: dict, user = Depends(require_admin)):
+    existing = await db.usuarios.find_one({"username": data["username"]})
+    if existing:
+        raise HTTPException(status_code=400, detail="El nombre de usuario ya existe")
+    
+    new_user = Usuario(
+        username=data["username"],
+        password_hash=hash_password(data["password"]),
+        nombre=data.get("nombre", ""),
+        email=data.get("email", ""),
+        role=data.get("role", "editor"),
+    )
+    doc = new_user.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    await db.usuarios.insert_one(doc)
+    return {"status": "ok", "id": doc["id"]}
+
+@api_router.put("/usuarios/{user_id}")
+async def update_usuario(user_id: str, data: dict, user = Depends(require_admin)):
+    update_data = {}
+    if "nombre" in data:
+        update_data["nombre"] = data["nombre"]
+    if "email" in data:
+        update_data["email"] = data["email"]
+    if "role" in data:
+        update_data["role"] = data["role"]
+    if "activo" in data:
+        update_data["activo"] = data["activo"]
+    if "password" in data and data["password"]:
+        update_data["password_hash"] = hash_password(data["password"])
+    
+    await db.usuarios.update_one({"id": user_id}, {"$set": update_data})
+    return {"status": "ok"}
+
+@api_router.delete("/usuarios/{user_id}")
+async def delete_usuario(user_id: str, user = Depends(require_admin)):
+    # Prevent deleting yourself
+    if user_id == user.get("user_id"):
+        raise HTTPException(status_code=400, detail="No puedes eliminar tu propia cuenta")
+    await db.usuarios.delete_one({"id": user_id})
+    return {"status": "ok"}
 
 @api_router.post("/empresas", response_model=Empresa)
 async def create_empresa(data: EmpresaCreate, user = Depends(get_current_user)):
@@ -895,11 +1043,18 @@ async def seed_data():
     if not admin:
         admin_user = Usuario(
             username="admin",
-            password_hash=hash_password("admin123")
+            password_hash=hash_password("admin123"),
+            nombre="Administrador",
+            email="",
+            role="admin",
         )
         doc = admin_user.model_dump()
         doc['created_at'] = doc['created_at'].isoformat()
         await db.usuarios.insert_one(doc)
+    else:
+        # Ensure existing admin has role field
+        if "role" not in admin:
+            await db.usuarios.update_one({"username": "admin"}, {"$set": {"role": "admin", "activo": True}})
     
     # Seed Actividades
     actividades_seed = [

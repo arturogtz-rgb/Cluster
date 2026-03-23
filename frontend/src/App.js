@@ -23,6 +23,9 @@ import ActividadForm from "./pages/admin/ActividadForm";
 import AdminCategorias from "./pages/admin/AdminCategorias";
 import AdminMedia from "./pages/admin/AdminMedia";
 import AdminSettings from "./pages/admin/AdminSettings";
+import AdminNosotros from "./pages/admin/AdminNosotros";
+import AdminLeads from "./pages/admin/AdminLeads";
+import AdminUsuarios from "./pages/admin/AdminUsuarios";
 
 // Components
 import FloatingNav from "./components/FloatingNav";
@@ -211,6 +214,30 @@ function App() {
             element={
               <AdminLayout>
                 <AdminSettings />
+              </AdminLayout>
+            }
+          />
+          <Route
+            path="/admin/nosotros-editor"
+            element={
+              <AdminLayout>
+                <AdminNosotros />
+              </AdminLayout>
+            }
+          />
+          <Route
+            path="/admin/leads"
+            element={
+              <AdminLayout>
+                <AdminLeads />
+              </AdminLayout>
+            }
+          />
+          <Route
+            path="/admin/usuarios"
+            element={
+              <AdminLayout>
+                <AdminUsuarios />
               </AdminLayout>
             }
           />

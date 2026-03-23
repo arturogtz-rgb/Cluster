@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -13,26 +13,47 @@ import {
   TreePine,
   Search,
   Command,
+  Mail,
+  Users,
+  FileText,
 } from "lucide-react";
 import CommandSearch from "./CommandSearch";
 
 const CLUSTER_LOGO =
   "https://customer-assets.emergentagent.com/job_tourism-cluster-mx/artifacts/jvvolfwz_Gemini_Generated_Image_plcp43plcp43plcp.png";
 
-const navItems = [
-  { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { path: "/admin/empresas", label: "Empresas", icon: Building2 },
-  { path: "/admin/articulos", label: "Artículos", icon: Newspaper },
-  { path: "/admin/actividades", label: "Actividades", icon: TreePine },
-  { path: "/admin/categorias", label: "Categorías", icon: Tag },
-  { path: "/admin/media", label: "Media", icon: FolderOpen },
-  { path: "/admin/configuracion", label: "Configuración", icon: Settings },
+const allNavItems = [
+  { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "editor"] },
+  { path: "/admin/empresas", label: "Empresas", icon: Building2, roles: ["admin"] },
+  { path: "/admin/articulos", label: "Artículos", icon: Newspaper, roles: ["admin", "editor"] },
+  { path: "/admin/actividades", label: "Actividades", icon: TreePine, roles: ["admin", "editor"] },
+  { path: "/admin/categorias", label: "Categorías", icon: Tag, roles: ["admin"] },
+  { path: "/admin/media", label: "Media", icon: FolderOpen, roles: ["admin"] },
+  { path: "/admin/leads", label: "Mensajes", icon: Mail, roles: ["admin"] },
+  { path: "/admin/nosotros-editor", label: "Nosotros", icon: FileText, roles: ["admin"] },
+  { path: "/admin/usuarios", label: "Usuarios", icon: Users, roles: ["admin"] },
+  { path: "/admin/configuracion", label: "Configuración", icon: Settings, roles: ["admin"] },
 ];
 
 const AdminLayout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [userRole, setUserRole] = useState("admin");
+
+  useEffect(() => {
+    const token = localStorage.getItem("auth_token");
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        setUserRole(payload.role || "admin");
+      } catch (e) {
+        // fallback to admin
+      }
+    }
+  }, []);
+
+  const navItems = allNavItems.filter((item) => item.roles.includes(userRole));
 
   const handleLogout = () => {
     localStorage.removeItem("auth_token");
