@@ -11,7 +11,10 @@ import {
   X,
   LayoutDashboard,
   TreePine,
+  Search,
+  Command,
 } from "lucide-react";
+import CommandSearch from "./CommandSearch";
 
 const CLUSTER_LOGO =
   "https://customer-assets.emergentagent.com/job_tourism-cluster-mx/artifacts/jvvolfwz_Gemini_Generated_Image_plcp43plcp43plcp.png";
@@ -79,6 +82,22 @@ const AdminLayout = ({ children }) => {
               <X className="w-5 h-5" />
             </button>
           </div>
+          {/* Search trigger */}
+          <button
+            onClick={() => {
+              // Trigger the Cmd+K handler in CommandSearch
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+            }}
+            data-testid="sidebar-search-btn"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-all mb-4"
+          >
+            <Search className="w-5 h-5" />
+            <span className="flex-1 text-left text-sm">Buscar...</span>
+            <kbd className="hidden lg:flex items-center gap-0.5 px-1.5 py-0.5 bg-white/10 rounded text-[10px] font-mono text-white/50">
+              <Command className="w-2.5 h-2.5" />K
+            </kbd>
+          </button>
+
           <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -124,6 +143,9 @@ const AdminLayout = ({ children }) => {
 
       {/* Main Content */}
       <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">{children}</main>
+
+      {/* Command Search - always mounted, manages own visibility */}
+      <CommandSearch />
     </div>
   );
 };

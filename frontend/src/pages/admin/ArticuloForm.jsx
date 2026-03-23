@@ -1,166 +1,16 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import {
   ArrowLeft,
   Save,
-  Plus,
-  X,
   FileText,
-  Bold,
-  Italic,
-  List,
-  Heading2,
-  Link as LinkIcon,
-  Image as ImageIcon,
 } from "lucide-react";
 import ImageUploader from "../../components/ImageUploader";
+import TiptapEditor from "../../components/TiptapEditor";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
-const RichTextEditor = ({ value, onChange }) => {
-  const [textValue, setTextValue] = useState(value || "");
-
-  useEffect(() => {
-    setTextValue(value || "");
-  }, [value]);
-
-  const handleChange = (e) => {
-    const newValue = e.target.value;
-    setTextValue(newValue);
-    onChange(newValue);
-  };
-
-  const insertTag = useCallback(
-    (tag, closingTag = null) => {
-      const textarea = document.getElementById("rich-editor-articulo");
-      if (!textarea) return;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = textValue.substring(start, end);
-      const closeTag = closingTag || tag;
-      let newText;
-      if (selectedText) {
-        newText =
-          textValue.substring(0, start) +
-          `<${tag}>${selectedText}</${closeTag}>` +
-          textValue.substring(end);
-      } else {
-        newText =
-          textValue.substring(0, start) +
-          `<${tag}></${closeTag}>` +
-          textValue.substring(end);
-      }
-      setTextValue(newText);
-      onChange(newText);
-    },
-    [textValue, onChange]
-  );
-
-  const insertList = useCallback(() => {
-    const textarea = document.getElementById("rich-editor-articulo");
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textValue.substring(start, end);
-    let newText;
-    if (selectedText) {
-      const items = selectedText
-        .split("\n")
-        .map((item) => `<li>${item.trim()}</li>`)
-        .join("\n");
-      newText =
-        textValue.substring(0, start) +
-        `<ul>\n${items}\n</ul>` +
-        textValue.substring(end);
-    } else {
-      newText =
-        textValue.substring(0, start) +
-        `<ul>\n<li></li>\n</ul>` +
-        textValue.substring(end);
-    }
-    setTextValue(newText);
-    onChange(newText);
-  }, [textValue, onChange]);
-
-  const insertImage = useCallback(() => {
-    const url = prompt("URL de la imagen:");
-    if (!url) return;
-    const textarea = document.getElementById("rich-editor-articulo");
-    if (!textarea) return;
-    const start = textarea.selectionStart;
-    const imgTag = `<img src="${url}" alt="" class="w-full rounded-lg my-4" />`;
-    const newText =
-      textValue.substring(0, start) + imgTag + textValue.substring(start);
-    setTextValue(newText);
-    onChange(newText);
-  }, [textValue, onChange]);
-
-  return (
-    <div className="border border-stone-200 rounded-xl overflow-hidden">
-      <div className="bg-stone-50 p-2 flex gap-1 border-b border-stone-200 flex-wrap">
-        <button
-          type="button"
-          onClick={() => insertTag("h2")}
-          className="p-2 hover:bg-white rounded-lg transition-colors"
-          title="Encabezado"
-        >
-          <Heading2 className="w-4 h-4 text-stone-600" />
-        </button>
-        <button
-          type="button"
-          onClick={() => insertTag("strong")}
-          className="p-2 hover:bg-white rounded-lg transition-colors"
-          title="Negrita"
-        >
-          <Bold className="w-4 h-4 text-stone-600" />
-        </button>
-        <button
-          type="button"
-          onClick={() => insertTag("em")}
-          className="p-2 hover:bg-white rounded-lg transition-colors"
-          title="Cursiva"
-        >
-          <Italic className="w-4 h-4 text-stone-600" />
-        </button>
-        <button
-          type="button"
-          onClick={insertList}
-          className="p-2 hover:bg-white rounded-lg transition-colors"
-          title="Lista"
-        >
-          <List className="w-4 h-4 text-stone-600" />
-        </button>
-        <button
-          type="button"
-          onClick={() => insertTag('a href=""', "a")}
-          className="p-2 hover:bg-white rounded-lg transition-colors"
-          title="Enlace"
-        >
-          <LinkIcon className="w-4 h-4 text-stone-600" />
-        </button>
-        <div className="w-px bg-stone-300 mx-1" />
-        <button
-          type="button"
-          onClick={insertImage}
-          className="p-2 hover:bg-white rounded-lg transition-colors"
-          title="Insertar imagen"
-        >
-          <ImageIcon className="w-4 h-4 text-stone-600" />
-        </button>
-      </div>
-      <textarea
-        id="rich-editor-articulo"
-        value={textValue}
-        onChange={handleChange}
-        rows={16}
-        className="w-full p-4 text-sm font-mono resize-none focus:outline-none bg-white"
-        placeholder="Escribe el contenido HTML aquí..."
-      />
-    </div>
-  );
-};
 
 const ArticuloForm = () => {
   const navigate = useNavigate();
@@ -334,7 +184,7 @@ const ArticuloForm = () => {
               <h2 className="font-outfit font-bold text-lg text-stone-900 mb-6">
                 Contenido *
               </h2>
-              <RichTextEditor
+              <TiptapEditor
                 value={form.contenido}
                 onChange={(value) => setForm({ ...form, contenido: value })}
               />
