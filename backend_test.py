@@ -8,7 +8,7 @@ from datetime import datetime
 from PIL import Image
 
 class TourismClusterAPITester:
-    def __init__(self, base_url="https://tourism-cluster-mx.preview.emergentagent.com/api"):
+    def __init__(self, base_url="https://jalisco-turismo-cms.preview.emergentagent.com/api"):
         self.base_url = base_url
         self.token = None
         self.tests_run = 0

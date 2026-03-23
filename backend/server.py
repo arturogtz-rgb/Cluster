@@ -210,6 +210,36 @@ class MediaFile(BaseModel):
     mime_type: str
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+# ==================== ACTIVIDADES MODELS ====================
+
+class Actividad(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    nombre: str
+    slug: str
+    descripcion: str = ""
+    icono_url: str = ""
+    color: str = "#1a4d2e"  # Color for map markers
+    orden: int = 0
+    activa: bool = True
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class ActividadCreate(BaseModel):
+    nombre: str
+    descripcion: str = ""
+    icono_url: str = ""
+    color: str = "#1a4d2e"
+    orden: int = 0
+    activa: bool = True
+
+class ActividadUpdate(BaseModel):
+    nombre: Optional[str] = None
+    descripcion: Optional[str] = None
+    icono_url: Optional[str] = None
+    color: Optional[str] = None
+    orden: Optional[int] = None
+    activa: Optional[bool] = None
+
 # ==================== AUTH HELPERS ====================
 
 def hash_password(password: str) -> str:
@@ -489,6 +519,80 @@ async def delete_categoria(slug: str, user = Depends(get_current_user)):
         raise HTTPException(status_code=404, detail="Categoría no encontrada")
     return {"message": "Categoría eliminada"}
 
+# ==================== ACTIVIDADES CRUD ====================
+
+@api_router.get("/actividades", response_model=List[Actividad])
+async def get_actividades(activa: Optional[bool] = None):
+    query = {}
+    if activa is not None:
+        query["activa"] = activa
+    
+    actividades = await db.actividades.find(query, {"_id": 0}).sort("orden", 1).to_list(100)
+    
+    for act in actividades:
+        if isinstance(act.get('created_at'), str):
+            act['created_at'] = datetime.fromisoformat(act['created_at'])
+    
+    return actividades
+
+@api_router.get("/actividades/{slug}", response_model=Actividad)
+async def get_actividad(slug: str):
+    actividad = await db.actividades.find_one({"slug": slug}, {"_id": 0})
+    if not actividad:
+        raise HTTPException(status_code=404, detail="Actividad no encontrada")
+    
+    if isinstance(actividad.get('created_at'), str):
+        actividad['created_at'] = datetime.fromisoformat(actividad['created_at'])
+    
+    return actividad
+
+@api_router.post("/actividades", response_model=Actividad)
+async def create_actividad(data: ActividadCreate, user = Depends(get_current_user)):
+    actividad_dict = data.model_dump()
+    actividad_dict["slug"] = slugify(data.nombre, lowercase=True)
+    
+    existing = await db.actividades.find_one({"slug": actividad_dict["slug"]})
+    if existing:
+        actividad_dict["slug"] = f"{actividad_dict['slug']}-{str(uuid.uuid4())[:8]}"
+    
+    actividad = Actividad(**actividad_dict)
+    doc = actividad.model_dump()
+    doc['created_at'] = doc['created_at'].isoformat()
+    
+    await db.actividades.insert_one(doc)
+    return actividad
+
+@api_router.put("/actividades/{slug}", response_model=Actividad)
+async def update_actividad(slug: str, data: ActividadUpdate, user = Depends(get_current_user)):
+    actividad = await db.actividades.find_one({"slug": slug}, {"_id": 0})
+    if not actividad:
+        raise HTTPException(status_code=404, detail="Actividad no encontrada")
+    
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    
+    if "nombre" in update_data:
+        new_slug = slugify(update_data["nombre"], lowercase=True)
+        if new_slug != slug:
+            existing = await db.actividades.find_one({"slug": new_slug})
+            if existing:
+                new_slug = f"{new_slug}-{str(uuid.uuid4())[:8]}"
+            update_data["slug"] = new_slug
+    
+    await db.actividades.update_one({"slug": slug}, {"$set": update_data})
+    updated = await db.actividades.find_one({"slug": update_data.get("slug", slug)}, {"_id": 0})
+    
+    if isinstance(updated.get('created_at'), str):
+        updated['created_at'] = datetime.fromisoformat(updated['created_at'])
+    
+    return updated
+
+@api_router.delete("/actividades/{slug}")
+async def delete_actividad(slug: str, user = Depends(get_current_user)):
+    result = await db.actividades.delete_one({"slug": slug})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Actividad no encontrada")
+    return {"message": "Actividad eliminada"}
+
 # ==================== SITE SETTINGS ====================
 
 @api_router.get("/settings", response_model=SiteSettings)
@@ -745,6 +849,36 @@ async def seed_data():
         doc = admin_user.model_dump()
         doc['created_at'] = doc['created_at'].isoformat()
         await db.usuarios.insert_one(doc)
+    
+    # Seed Actividades
+    actividades_seed = [
+        {"nombre": "Senderismo", "descripcion": "Caminatas por senderos naturales", "color": "#2d6a4f", "orden": 1},
+        {"nombre": "Rappel", "descripcion": "Descenso por cuerdas en formaciones rocosas", "color": "#1a4d2e", "orden": 2},
+        {"nombre": "Kayak", "descripcion": "Navegación en kayak por ríos y lagos", "color": "#0284c7", "orden": 3},
+        {"nombre": "Ciclismo de Montaña", "descripcion": "Rutas en bicicleta por terrenos montañosos", "color": "#d97706", "orden": 4},
+        {"nombre": "Tirolesa", "descripcion": "Deslizamiento por cables en las alturas", "color": "#059669", "orden": 5},
+        {"nombre": "Campismo", "descripcion": "Acampada en entornos naturales", "color": "#4f46e5", "orden": 6},
+        {"nombre": "Escalada", "descripcion": "Escalada en roca natural", "color": "#dc2626", "orden": 7},
+        {"nombre": "Observación de Aves", "descripcion": "Avistamiento de aves silvestres", "color": "#7c3aed", "orden": 8},
+        {"nombre": "Tours de Tequila", "descripcion": "Visitas a destilerías y campos de agave", "color": "#ca8a04", "orden": 9},
+        {"nombre": "Cabalgata", "descripcion": "Paseos a caballo", "color": "#9a3412", "orden": 10},
+    ]
+    
+    for act_data in actividades_seed:
+        slug = slugify(act_data["nombre"], lowercase=True)
+        existing = await db.actividades.find_one({"slug": slug})
+        if not existing:
+            actividad = Actividad(
+                nombre=act_data["nombre"],
+                slug=slug,
+                descripcion=act_data["descripcion"],
+                color=act_data["color"],
+                orden=act_data["orden"],
+                activa=True
+            )
+            doc = actividad.model_dump()
+            doc['created_at'] = doc['created_at'].isoformat()
+            await db.actividades.insert_one(doc)
     
     # Create Ecomuk empresa
     ecomuk = await db.empresas.find_one({"slug": "ecomuk-aventura-natural"})
