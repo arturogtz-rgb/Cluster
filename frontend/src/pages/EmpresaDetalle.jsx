@@ -20,6 +20,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { EmpresaSEO } from "../components/SEO";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -122,6 +123,7 @@ const EmpresaDetalle = () => {
 
   return (
     <div className="min-h-screen" data-testid="empresa-detalle-page">
+      <EmpresaSEO empresa={empresa} />
       {/* Hero Carousel */}
       <section className="relative h-[50vh] md:h-[65vh] w-full overflow-hidden">
         {allImages.length > 0 ? (

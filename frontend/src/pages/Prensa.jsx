@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { Calendar, ArrowRight } from "lucide-react";
+import { PageSEO } from "../components/SEO";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -35,6 +36,11 @@ const Prensa = () => {
 
   return (
     <div className="min-h-screen pt-24 md:pt-32 pb-16" data-testid="prensa-page">
+      <PageSEO
+        title="Prensa y Noticias"
+        description="Últimas novedades del turismo de naturaleza y aventura en Jalisco. Artículos, eventos y comunicados del Clúster."
+        url="/prensa"
+      />
       {/* Header */}
       <div className="px-6 md:px-12 mb-12">
         <div className="max-w-7xl mx-auto text-center">

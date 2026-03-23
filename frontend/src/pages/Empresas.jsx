@@ -5,6 +5,7 @@ import CompanyCard from "../components/CompanyCard";
 import CategoryFilter from "../components/CategoryFilter";
 import SearchBar from "../components/SearchBar";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { PageSEO } from "../components/SEO";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const PER_PAGE = 12;
@@ -65,6 +66,11 @@ const Empresas = () => {
       className="min-h-screen pt-24 md:pt-32 pb-16"
       data-testid="empresas-page"
     >
+      <PageSEO
+        title="Directorio de Empresas"
+        description="Explora el directorio completo de empresas de turismo de naturaleza y aventura en Jalisco. Operadoras, parques, capacitación y más."
+        url="/empresas"
+      />
       {/* Hero Header */}
       <div className="px-6 md:px-12 mb-12">
         <div className="max-w-7xl mx-auto text-center">

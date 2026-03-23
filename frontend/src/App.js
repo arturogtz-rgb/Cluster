@@ -1,41 +1,54 @@
 import "@/App.css";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
+import { lazy, Suspense } from "react";
 
-// Pages
+// Pages (eagerly loaded - critical path)
 import Home from "./pages/Home";
 import Empresas from "./pages/Empresas";
 import EmpresaDetalle from "./pages/EmpresaDetalle";
-import Prensa from "./pages/Prensa";
-import ArticuloDetalle from "./pages/ArticuloDetalle";
-import Mapa from "./pages/Mapa";
-import Nosotros from "./pages/Nosotros";
 
-// Admin Pages
-import AdminLogin from "./pages/admin/AdminLogin";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminEmpresas from "./pages/admin/AdminEmpresas";
-import EmpresaForm from "./pages/admin/EmpresaForm";
-import AdminArticulos from "./pages/admin/AdminArticulos";
-import ArticuloForm from "./pages/admin/ArticuloForm";
-import AdminActividades from "./pages/admin/AdminActividades";
-import ActividadForm from "./pages/admin/ActividadForm";
-import AdminCategorias from "./pages/admin/AdminCategorias";
-import AdminMedia from "./pages/admin/AdminMedia";
-import AdminSettings from "./pages/admin/AdminSettings";
-import AdminNosotros from "./pages/admin/AdminNosotros";
-import AdminLeads from "./pages/admin/AdminLeads";
-import AdminUsuarios from "./pages/admin/AdminUsuarios";
+// Pages (lazy loaded - less critical)
+const Prensa = lazy(() => import("./pages/Prensa"));
+const ArticuloDetalle = lazy(() => import("./pages/ArticuloDetalle"));
+const Mapa = lazy(() => import("./pages/Mapa"));
+const Nosotros = lazy(() => import("./pages/Nosotros"));
+
+// Admin Pages (all lazy loaded)
+const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
+const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
+const AdminEmpresas = lazy(() => import("./pages/admin/AdminEmpresas"));
+const EmpresaForm = lazy(() => import("./pages/admin/EmpresaForm"));
+const AdminArticulos = lazy(() => import("./pages/admin/AdminArticulos"));
+const ArticuloForm = lazy(() => import("./pages/admin/ArticuloForm"));
+const AdminActividades = lazy(() => import("./pages/admin/AdminActividades"));
+const ActividadForm = lazy(() => import("./pages/admin/ActividadForm"));
+const AdminCategorias = lazy(() => import("./pages/admin/AdminCategorias"));
+const AdminMedia = lazy(() => import("./pages/admin/AdminMedia"));
+const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
+const AdminNosotros = lazy(() => import("./pages/admin/AdminNosotros"));
+const AdminLeads = lazy(() => import("./pages/admin/AdminLeads"));
+const AdminUsuarios = lazy(() => import("./pages/admin/AdminUsuarios"));
 
 // Components
 import FloatingNav from "./components/FloatingNav";
 import WhatsAppButton from "./components/WhatsAppButton";
 import AdminLayout from "./components/AdminLayout";
 
+const PageLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-limestone">
+    <div className="text-center">
+      <div className="w-8 h-8 border-4 border-forest border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+      <p className="text-stone-500 font-inter text-sm">Cargando...</p>
+    </div>
+  </div>
+);
+
 function App() {
   return (
     <div className="App min-h-screen bg-limestone">
       <BrowserRouter>
+        <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public Routes */}
           <Route
@@ -243,6 +256,7 @@ function App() {
           />
         </Routes>
         <Toaster position="top-right" />
+        </Suspense>
       </BrowserRouter>
     </div>
   );

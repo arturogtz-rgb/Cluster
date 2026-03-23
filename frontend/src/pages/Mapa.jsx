@@ -6,6 +6,7 @@ import MarkerClusterGroup from "react-leaflet-cluster";
 import { MapPin, Phone, ExternalLink, Filter, X, TreePine } from "lucide-react";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
+import { PageSEO } from "../components/SEO";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -144,6 +145,11 @@ const Mapa = () => {
 
   return (
     <div className="min-h-screen pt-20 md:pt-24" data-testid="mapa-page">
+      <PageSEO
+        title="Mapa de Empresas"
+        description="Encuentra empresas de turismo de aventura cerca de ti en Jalisco. Mapa interactivo con filtros por categoría y actividad."
+        url="/mapa"
+      />
       {/* Header */}
       <div className="px-6 md:px-12 mb-6">
         <div className="max-w-7xl mx-auto">

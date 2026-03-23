@@ -14,6 +14,7 @@ import {
   Compass,
   ChevronDown,
 } from "lucide-react";
+import { PageSEO } from "../components/SEO";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -101,6 +102,11 @@ const Nosotros = () => {
 
   return (
     <div className="min-h-screen" data-testid="nosotros-page">
+      <PageSEO
+        title="Nosotros"
+        description="Conoce al Clúster de Turismo de Naturaleza y Aventura Jalisco. Nuestra misión, visión, valores y cómo unirte."
+        url="/nosotros"
+      />
       {/* Hero */}
       <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-forest">
         <div className="absolute inset-0 opacity-10">

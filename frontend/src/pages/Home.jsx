@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import axios from "axios";
 import { ArrowRight, Mountain, Users, Award, Leaf, MapPin } from "lucide-react";
 import CompanyCard from "../components/CompanyCard";
+import { PageSEO, OrganizationSEO } from "../components/SEO";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -111,6 +112,12 @@ const Home = () => {
 
   return (
     <div className="min-h-screen" data-testid="home-page">
+      <PageSEO
+        title="Inicio"
+        description="Descubre las mejores experiencias de turismo de naturaleza y aventura en Jalisco. Senderismo, rappel, kayak y más."
+        url="/"
+      />
+      <OrganizationSEO />
       {/* Hero Section */}
       <section className="relative h-screen w-full overflow-hidden" data-testid="hero-section">
         {/* Background Image */}

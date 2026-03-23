@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import { Calendar, ArrowLeft, Share2 } from "lucide-react";
 import { toast } from "sonner";
+import { ArticuloSEO } from "../components/SEO";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -76,6 +77,7 @@ const ArticuloDetalle = () => {
 
   return (
     <div className="min-h-screen" data-testid="articulo-detalle-page">
+      <ArticuloSEO articulo={articulo} />
       {/* Hero */}
       <section className="relative h-[50vh] md:h-[60vh] w-full overflow-hidden">
         <img
