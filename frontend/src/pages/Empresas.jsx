@@ -32,7 +32,8 @@ const Empresas = () => {
           url += `&busqueda=${encodeURIComponent(searchTerm)}`;
         }
         const response = await axios.get(url);
-        setEmpresas(response.data);
+        const data = response.data;
+        setEmpresas(Array.isArray(data) ? data : []);
         setCurrentPage(1);
       } catch (error) {
         console.error("Error fetching empresas:", error);

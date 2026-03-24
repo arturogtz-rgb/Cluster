@@ -70,36 +70,36 @@ const Home = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Seed data first
-        await axios.post(`${API}/seed`);
-        
-        // Fetch settings
-        const settingsRes = await axios.get(`${API}/settings`);
-        if (settingsRes.data) {
-          setSettings(prev => ({ ...prev, ...settingsRes.data }));
+        const [settingsRes, catRes, empresasRes] = await Promise.allSettled([
+          axios.get(`${API}/settings`),
+          axios.get(`${API}/categorias`),
+          axios.get(`${API}/empresas?destacada=true`),
+        ]);
+
+        if (settingsRes.status === "fulfilled" && settingsRes.value?.data) {
+          setSettings(prev => ({ ...prev, ...settingsRes.value.data }));
         }
 
-        // Fetch categories
-        const catRes = await axios.get(`${API}/categorias`);
-        if (catRes.data?.categorias && Array.isArray(catRes.data.categorias)) {
-          // Merge with default images if category has imagen_url
-          const mergedCats = catRes.data.categorias.map(cat => {
-            const defaultCat = CATEGORY_IMAGES.find(c => c.id === cat.nombre);
-            return {
-              id: cat.nombre,
-              label: cat.nombre,
-              image: cat.imagen_url || defaultCat?.image || CATEGORY_IMAGES[0].image,
-              description: cat.descripcion || defaultCat?.description || ""
-            };
-          });
-          if (mergedCats.length > 0) {
+        if (catRes.status === "fulfilled") {
+          const cats = catRes.value?.data?.categorias;
+          if (Array.isArray(cats) && cats.length > 0) {
+            const mergedCats = cats.map(cat => {
+              const defaultCat = CATEGORY_IMAGES.find(c => c.id === cat.nombre);
+              return {
+                id: cat.nombre,
+                label: cat.nombre,
+                image: cat.imagen_url || defaultCat?.image || CATEGORY_IMAGES[0].image,
+                description: cat.descripcion || defaultCat?.description || ""
+              };
+            });
             setCategorias(mergedCats.slice(0, 4));
           }
         }
-        
-        // Fetch featured companies
-        const response = await axios.get(`${API}/empresas?destacada=true`);
-        setEmpresasDestacadas(response.data);
+
+        if (empresasRes.status === "fulfilled") {
+          const data = empresasRes.value?.data;
+          setEmpresasDestacadas(Array.isArray(data) ? data : []);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {
@@ -249,7 +249,7 @@ const Home = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {categorias.map((cat, index) => (
+            {(Array.isArray(categorias) ? categorias : []).map((cat, index) => (
               <Link
                 key={cat.id}
                 to={`/empresas?categoria=${encodeURIComponent(cat.id)}`}
@@ -306,7 +306,7 @@ const Home = () => {
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {empresasDestacadas.map((empresa) => (
+              {(Array.isArray(empresasDestacadas) ? empresasDestacadas : []).map((empresa) => (
                 <CompanyCard key={empresa.id} empresa={empresa} />
               ))}
             </div>

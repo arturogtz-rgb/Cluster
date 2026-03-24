@@ -107,11 +107,13 @@ const Mapa = () => {
           axios.get(`${API}/empresas?activa=true`),
           axios.get(`${API}/actividades?activa=true`),
         ]);
-        const conCoordenadas = empresasRes.data.filter(
+        const empresasData = Array.isArray(empresasRes.data) ? empresasRes.data : [];
+        const conCoordenadas = empresasData.filter(
           (e) => e.latitud && e.longitud
         );
         setEmpresas(conCoordenadas);
-        setActividades(actividadesRes.data);
+        const actData = Array.isArray(actividadesRes.data) ? actividadesRes.data : [];
+        setActividades(actData);
       } catch (error) {
         console.error("Error fetching data:", error);
       } finally {

@@ -300,7 +300,7 @@ const EmpresaDetalle = () => {
                     className="flex flex-wrap gap-2 md:gap-3"
                     data-testid="actividades-list"
                   >
-                    {empresa.actividades.map((actividad, index) => (
+                    {(empresa.actividades || []).map((actividad, index) => (
                       <span
                         key={index}
                         className="activity-tag text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full"
@@ -319,7 +319,7 @@ const EmpresaDetalle = () => {
                     Galería
                   </h2>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                    {empresa.galeria.map((img, index) => (
+                  {(empresa.galeria || []).map((img, index) => (
                       <div
                         key={index}
                         className="cursor-pointer aspect-square rounded-2xl overflow-hidden"
@@ -425,7 +425,7 @@ const EmpresaDetalle = () => {
                         className="flex flex-wrap gap-3"
                         data-testid="social-links"
                       >
-                        {Object.entries(empresa.social_links).map(
+                        {Object.entries(empresa.social_links || {}).map(
                           ([key, value]) => {
                             if (!value) return null;
                             const Icon = socialIcons[key] || Globe;
