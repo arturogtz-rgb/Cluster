@@ -12,7 +12,7 @@ import requests
 import os
 import xml.etree.ElementTree as ET
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://jalisco-turismo-cms.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://eco-tourism-cluster.preview.emergentagent.com')
 
 class TestSitemapXML:
     """Tests for dynamic sitemap.xml generation"""
