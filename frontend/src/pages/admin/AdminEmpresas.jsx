@@ -35,7 +35,8 @@ const AdminEmpresas = () => {
   const fetchEmpresas = async () => {
     try {
       const response = await axios.get(`${API}/empresas`);
-      setEmpresas(response.data);
+      const data = response.data;
+      setEmpresas(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching empresas:", error);
     } finally {
@@ -57,7 +58,7 @@ const AdminEmpresas = () => {
     }
   };
 
-  const categories = [...new Set(empresas.map((e) => e.categoria))];
+  const categories = [...new Set((Array.isArray(empresas) ? empresas : []).map((e) => e.categoria))];
 
   const filteredEmpresas = empresas.filter((empresa) => {
     const matchesSearch =

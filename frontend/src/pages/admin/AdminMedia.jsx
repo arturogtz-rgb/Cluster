@@ -28,7 +28,8 @@ const AdminMedia = () => {
       const response = await axios.get(`${API}/media`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setMediaFiles(response.data || []);
+      const data = response.data;
+      setMediaFiles(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching media:", error);
     } finally {

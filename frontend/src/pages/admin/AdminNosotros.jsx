@@ -39,11 +39,12 @@ const AdminNosotros = () => {
   const fetchSettings = async () => {
     try {
       const response = await axios.get(`${API}/nosotros-settings`);
+      const data = response.data || {};
       setSettings((prev) => ({
         ...prev,
-        ...response.data,
-        valores: response.data.valores || prev.valores,
-        stats: response.data.stats || prev.stats,
+        ...data,
+        valores: Array.isArray(data.valores) ? data.valores : prev.valores,
+        stats: Array.isArray(data.stats) ? data.stats : prev.stats,
       }));
     } catch (error) {
       console.error("Error fetching settings:", error);
@@ -192,10 +193,10 @@ const AdminNosotros = () => {
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <h3 className="font-outfit font-bold text-lg mb-4 flex items-center gap-2">
               <Leaf className="w-5 h-5 text-forest" />
-              Valores ({settings.valores.length})
+              Valores ({(settings.valores || []).length})
             </h3>
             <div className="space-y-2 mb-4">
-              {settings.valores.map((valor, i) => (
+              {(settings.valores || []).map((valor, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-2 bg-stone-50 px-4 py-2.5 rounded-xl"
@@ -242,7 +243,7 @@ const AdminNosotros = () => {
               (empresas, actividades)
             </p>
             <div className="space-y-3 mb-4">
-              {settings.stats.map((stat, i) => (
+              {(settings.stats || []).map((stat, i) => (
                 <div
                   key={i}
                   className="flex items-center gap-2 bg-stone-50 p-3 rounded-xl"

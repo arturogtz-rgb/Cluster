@@ -48,7 +48,8 @@ const AdminUsuarios = () => {
       const response = await axios.get(`${API}/usuarios`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setUsuarios(response.data);
+      const data = response.data;
+      setUsuarios(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching usuarios:", error);
     } finally {
@@ -197,6 +198,18 @@ const AdminUsuarios = () => {
           {[1, 2, 3].map((i) => (
             <div key={i} className="skeleton rounded-2xl h-20" />
           ))}
+        </div>
+      ) : usuarios.length === 0 ? (
+        <div className="text-center py-16">
+          <div className="w-16 h-16 bg-stone-200 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl text-stone-400">0</span>
+          </div>
+          <h3 className="font-outfit font-bold text-lg text-stone-800 mb-2">
+            No hay usuarios registrados
+          </h3>
+          <p className="text-stone-500">
+            Crea un nuevo usuario para empezar
+          </p>
         </div>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm overflow-hidden">

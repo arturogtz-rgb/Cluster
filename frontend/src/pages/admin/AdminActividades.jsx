@@ -34,7 +34,8 @@ const AdminActividades = () => {
   const fetchActividades = async () => {
     try {
       const response = await axios.get(`${API}/actividades`);
-      setActividades(response.data);
+      const data = response.data;
+      setActividades(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching actividades:", error);
     } finally {

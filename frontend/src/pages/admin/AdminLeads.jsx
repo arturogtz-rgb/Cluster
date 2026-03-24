@@ -34,7 +34,8 @@ const AdminLeads = () => {
       const response = await axios.get(`${API}/leads`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setLeads(response.data);
+      const data = response.data;
+      setLeads(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching leads:", error);
     } finally {

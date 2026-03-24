@@ -34,7 +34,8 @@ const AdminArticulos = () => {
       const response = await axios.get(`${API}/articulos`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setArticulos(response.data);
+      const data = response.data;
+      setArticulos(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Error fetching articulos:", error);
     } finally {

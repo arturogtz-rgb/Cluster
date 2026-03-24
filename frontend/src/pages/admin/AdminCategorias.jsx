@@ -42,7 +42,8 @@ const AdminCategorias = () => {
   const fetchCategorias = async () => {
     try {
       const response = await axios.get(`${API}/categorias`);
-      setCategorias(response.data?.categorias || []);
+      const cats = response.data?.categorias;
+      setCategorias(Array.isArray(cats) ? cats : []);
     } catch (error) {
       console.error("Error fetching categorias:", error);
     } finally {
