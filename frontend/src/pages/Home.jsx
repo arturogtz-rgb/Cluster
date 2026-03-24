@@ -324,7 +324,7 @@ const Home = () => {
             Únete al Clúster de Turismo de Naturaleza y Aventura y conecta con miles de visitantes buscando experiencias únicas.
           </p>
           <Link
-            to="/admin"
+            to="/nosotros"
             data-testid="cta-join-btn"
             className="bg-adventure text-white px-10 py-4 rounded-full text-sm font-bold uppercase tracking-widest transition-all duration-300 hover:bg-adventure-dark hover:scale-105 shadow-lg inline-flex items-center gap-2"
           >

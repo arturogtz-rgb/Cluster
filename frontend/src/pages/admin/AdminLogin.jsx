@@ -123,7 +123,7 @@ const AdminLogin = () => {
 
         {/* Help Text */}
         <p className="text-center text-stone-500 text-sm mt-6">
-          Credenciales por defecto: <strong>admin</strong> / <strong>admin123</strong>
+          Panel de administración del Clúster
         </p>
       </div>
     </div>
