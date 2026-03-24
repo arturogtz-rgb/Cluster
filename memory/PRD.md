@@ -48,16 +48,15 @@ Sitio web completo para el Clúster de Turismo de Naturaleza y Aventura Jalisco.
 - Meta-tags dinámicos (react-helmet-async), JSON-LD, sitemap XML dinámico, code splitting
 
 ### Fase 9: Refactorización + Analytics Dashboard - COMPLETADA Mar 2026
-- **Refactorización Backend**: server.py dividido de 1264 líneas a ~130 líneas con módulos (database.py, models.py, auth.py, utils.py, seed.py, routes/)
+- **Refactorización Backend**: server.py dividido de 1264 líneas a ~130 líneas con módulos
 - **Auto-seed en startup**: El admin user se crea automáticamente al arrancar el servidor
-- **Dashboard de Analíticas (recharts)**: 4 gráficas interactivas:
-  - Empresas Más Visitadas (BarChart horizontal)
-  - Empresas por Categoría (PieChart donut)
-  - Mensajes por Mes (AreaChart)
-  - Vistas por Categoría (BarChart vertical)
-- **KPI Cards**: Empresas, Artículos, Actividades, Mensajes, No leídos
-- **Acceso Rápido**: Links directos a todos los módulos del admin
+- **Dashboard de Analíticas (recharts)**: 4 gráficas interactivas + KPI cards
 - **Endpoint /api/analytics/overview**: Agregaciones MongoDB para estadísticas
+
+### Fase 9b: Limpieza y White Label - COMPLETADA Mar 2026
+- **Reset credenciales admin**: Colección limpia + auto-seed garantiza admin/admin123
+- **White Label**: Marca "Made with Emergent" eliminada del index.html + CSS fallback
+- Sitio 100% marca del Clúster
 
 ### Arquitectura Backend (Post-Refactorización)
 ```
@@ -94,5 +93,5 @@ backend/
 - **P3**: Soporte Multi-idioma (español/inglés)
 - **P3**: PWA (Progressive Web App)
 
-## Estado: Producción-Ready
-Todas las fases del plan de desarrollo han sido completadas y probadas con 100% de éxito.
+## Estado: Producción-Ready + White Label
+Todas las fases completadas y probadas. Sitio sin marcas de terceros.
