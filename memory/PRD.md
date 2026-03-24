@@ -44,17 +44,55 @@ Sitio web completo para el Clúster de Turismo de Naturaleza y Aventura Jalisco.
 - Editor de /nosotros desde admin (misión, visión, valores, estadísticas, CTA)
 - Sistema de usuarios y roles (Admin vs Editor)
 
-### Fase 8: SEO & PageSpeed - COMPLETADA Feb 2026
-- **Meta-tags dinámicos** (react-helmet-async): título, og:title, og:description, og:image, Twitter Cards, canonical URLs en cada página
-- **JSON-LD estructurado**: Organization (home), LocalBusiness/TravelAgency/EducationalOrganization/AmusementPark (empresas según categoría), Article (artículos)
-- **Sitemap.xml dinámico**: Todas las páginas estáticas + empresas + artículos con lastmod, changefreq, priority
-- **Code Splitting**: React.lazy + Suspense para Mapa, Nosotros, Prensa, todas las páginas admin
+### Fase 8: SEO & PageSpeed
+- Meta-tags dinámicos (react-helmet-async), JSON-LD, sitemap XML dinámico, code splitting
+
+### Fase 9: Refactorización + Analytics Dashboard - COMPLETADA Mar 2026
+- **Refactorización Backend**: server.py dividido de 1264 líneas a ~130 líneas con módulos (database.py, models.py, auth.py, utils.py, seed.py, routes/)
+- **Auto-seed en startup**: El admin user se crea automáticamente al arrancar el servidor
+- **Dashboard de Analíticas (recharts)**: 4 gráficas interactivas:
+  - Empresas Más Visitadas (BarChart horizontal)
+  - Empresas por Categoría (PieChart donut)
+  - Mensajes por Mes (AreaChart)
+  - Vistas por Categoría (BarChart vertical)
+- **KPI Cards**: Empresas, Artículos, Actividades, Mensajes, No leídos
+- **Acceso Rápido**: Links directos a todos los módulos del admin
+- **Endpoint /api/analytics/overview**: Agregaciones MongoDB para estadísticas
+
+### Arquitectura Backend (Post-Refactorización)
+```
+backend/
+├── server.py          (~130 líneas - app principal + analytics)
+├── database.py        (Conexión MongoDB)
+├── models.py          (Todos los modelos Pydantic)
+├── auth.py            (JWT helpers + dependencies)
+├── utils.py           (Optimización de imágenes + email)
+├── seed.py            (Datos iniciales)
+├── routes/
+│   ├── auth_routes.py
+│   ├── empresas.py
+│   ├── articulos.py
+│   ├── categorias.py
+│   ├── actividades.py
+│   ├── media_settings.py
+│   ├── leads.py
+│   ├── usuarios.py
+│   └── seo.py
+├── uploads/
+└── tests/
+```
 
 ### Stack Técnico Final
-- **Frontend**: React 19, Tailwind CSS, Shadcn UI, Leaflet, Tiptap, react-leaflet-cluster, react-helmet-async
-- **Backend**: FastAPI, MongoDB, Pillow, fastapi-mail, PyJWT
+- **Frontend**: React 19, Tailwind CSS, Shadcn UI, Leaflet, Tiptap, recharts, react-leaflet-cluster, react-helmet-async
+- **Backend**: FastAPI (modular routers), MongoDB, Pillow, fastapi-mail, PyJWT
 - **Auth**: JWT con roles (admin/editor)
 - **Storage**: Local (/uploads/) con optimización WebP automática
 
+## Backlog (P1/P2/P3)
+- **P1**: Onboarding de Editores (email con enlace para establecer contraseña)
+- **P2**: Exportar Leads a CSV
+- **P3**: Soporte Multi-idioma (español/inglés)
+- **P3**: PWA (Progressive Web App)
+
 ## Estado: Producción-Ready
-Todas las fases del plan de desarrollo han sido completadas y probadas.
+Todas las fases del plan de desarrollo han sido completadas y probadas con 100% de éxito.
