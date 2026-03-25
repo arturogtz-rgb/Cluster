@@ -39,6 +39,9 @@ services:
     ports:
       - "80:80"
       - "443:443"
+    volumes:
+      - ./ssl/fullchain.pem:/etc/ssl/certs/fullchain.pem:ro
+      - ./ssl/privkey.pem:/etc/ssl/private/privkey.pem:ro
 
 volumes:
   mongo_data:
