@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  database:
+    image: mongo:7
+    container_name: turismo-db
+    restart: always
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  backend:
+    build: ./backend
+    container_name: turismo-backend
+    restart: always
+    depends_on:
+      - database
+    environment:
+      - MONGO_URL=mongodb://database:27017
+      - DB_NAME=turismo_jalisco
+      - CORS_ORIGINS=https://clusterturismojalisco.com.mx,https://www.clusterturismojalisco.com.mx,http://localhost
+    env_file:
+      - ./backend/.env.production
+    ports:
+      - "8001:8001"
+    volumes:
+      - uploads_data:/app/uploads
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - REACT_APP_BACKEND_URL=https://clusterturismojalisco.com.mx
+    container_name: turismo-frontend
+    restart: always
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+      - "443:443"
+
+volumes:
+  mongo_data:
+  uploads_data:
