@@ -125,11 +125,13 @@ app.include_router(api_router)
 # Mount uploads
 app.mount("/api/uploads", StaticFiles(directory=str(ROOT_DIR / "uploads")), name="uploads")
 
-# CORS
+# CORS - Production domains
+default_origins = "https://clusterturismojalisco.com.mx,https://www.clusterturismojalisco.com.mx"
+cors_origins = os.environ.get("CORS_ORIGINS", default_origins).split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=os.environ.get("CORS_ORIGINS", "*").split(","),
+    allow_origins=[o.strip() for o in cors_origins] + ["*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
