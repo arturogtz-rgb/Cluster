@@ -17,29 +17,33 @@ Sitio web completo para el Clúster de Turismo de Naturaleza y Aventura de Jalis
 │   ├── server.py, database.py, models.py, auth.py, seed.py, utils.py
 ├── frontend/
 │   ├── src/pages/ (Home, Empresas, EmpresaDetalle, Prensa, ArticuloDetalle, Mapa, Nosotros, admin/*)
-│   ├── src/components/ (AdminLayout, CompanyCard, FloatingNav, WhatsAppButton, etc.)
+│   ├── src/components/ (AdminLayout, CompanyCard, FloatingNav, WhatsAppButton, ImageUploader, etc.)
 ```
 
-## Fases del Proyecto (Plan Actual)
+## Fases del Proyecto
 
 ### FASE 1: Correcciones Críticas y Ajustes Visuales - COMPLETADA (2026-03-28)
 - [x] Hero Index al 50vh
 - [x] "Empresas más consultadas" (renombrado + top 6 por visitas + prioridad manual)
 - [x] CTA: "¿Eres una empresa de turismo de naturaleza en Jalisco?"
 - [x] Footer: "Sitio desarrollado por Aventúrate Por Jalisco"
-- [x] Bug fix: nombres de actividades en vez de UUIDs
+- [x] Bug fix: nombres de actividades resueltos (no UUIDs)
 - [x] Prensa: fechas eliminadas de tarjetas
 - [x] Nosotros: hero con imagen real
 - [x] Categorías: centradas, máx 8, reducción móvil
 
-### FASE 2: Funcionalidades de Admin y Gestión de Contenido - PENDIENTE
-- [ ] Hero dinámico (hasta 3 imágenes con texto) en /admin/configuracion
-- [ ] Numeralia editable en /admin/nosotros-editor
-- [ ] WhatsApp global con toggle y burbuja flotante
-- [ ] Galería en detalle de Prensa
-- [ ] Logo superpuesto en lightbox de galería de empresa
-- [ ] Fix botón "Agregar imágenes" en admin empresas
-- [ ] Fix menú lateral admin en móvil
+### FASE 2: Funcionalidades de Admin y Gestión de Contenido - COMPLETADA (2026-03-28)
+- [x] Hero dinámico: carrusel hasta 3 imágenes con texto en /admin/configuracion
+- [x] Herencia de texto: slides sin texto heredan del slide 1
+- [x] Numeralia editable: Nombre corto (Index) y Nombre largo (Nosotros) en /admin/nosotros-editor
+- [x] WhatsApp global: número con formato internacional (+52), toggle visible/no visible
+- [x] Burbuja flotante WhatsApp en todas las páginas públicas
+- [x] Galería de imágenes en detalle de Prensa (/prensa/:slug)
+- [x] Galería en formulario de artículos (admin)
+- [x] Logo superpuesto en lightbox de galería de empresa
+- [x] Fix botón "Agregar imágenes" (ahora con ImageUploader + URL)
+- [x] Fix menú lateral admin en móvil (z-index: header z-30, overlay z-40, sidebar z-50)
+- [x] Hero dinámico por categoría en /empresas?categoria=...
 
 ### FASE 3: Lógica Geo-Localizada - PENDIENTE
 - [ ] Rediseño relación Empresa-Actividad (ubicaciones múltiples)
