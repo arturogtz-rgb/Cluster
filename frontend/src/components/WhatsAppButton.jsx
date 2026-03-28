@@ -1,20 +1,43 @@
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { MessageCircle } from "lucide-react";
+import axios from "axios";
+
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const WhatsAppButton = () => {
   const location = useLocation();
-  
-  // Hide on admin pages
-  const isAdminPage = location.pathname.startsWith("/admin");
-  if (isAdminPage) return null;
+  const [config, setConfig] = useState({ number: "", visible: false });
 
-  const whatsappNumber = "523334601257"; // Default cluster number
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const res = await axios.get(`${API}/settings`);
+        const data = res.data || {};
+        setConfig({
+          number: data.whatsapp_number || "",
+          visible: data.whatsapp_visible ?? false,
+        });
+      } catch (e) {
+        // silently fail
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  // Hide on admin pages or when not visible
+  const isAdminPage = location.pathname.startsWith("/admin");
+  if (isAdminPage || !config.visible || !config.number) return null;
+
+  // Clean number: remove spaces, dashes, parentheses. Keep + at start
+  const cleanNumber = config.number.replace(/[\s\-()]/g, "").replace(/^\+/, "");
+
   const message = encodeURIComponent(
     "¡Hola! Me interesa conocer más sobre las experiencias de turismo de naturaleza y aventura en Jalisco. ¿Podrían ayudarme?"
   );
 
   const handleClick = () => {
-    window.open(`https://wa.me/${whatsappNumber}?text=${message}`, "_blank");
+    window.open(`https://wa.me/${cleanNumber}?text=${message}`, "_blank");
   };
 
   return (

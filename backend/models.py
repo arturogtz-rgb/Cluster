@@ -129,12 +129,21 @@ class LoginResponse(BaseModel):
     username: str
 
 
+class HeroSlide(BaseModel):
+    image: str = ""
+    title: str = ""
+    subtitle: str = ""
+
+
 class SiteSettings(BaseModel):
-    model_config = ConfigDict(extra="ignore")
+    model_config = ConfigDict(extra="allow")
     id: str = "site_settings"
     hero_image: str = "https://images.unsplash.com/photo-1732043846829-dc34d9e2e989?w=1920"
     hero_title: str = "Descubre la Aventura"
     hero_subtitle: str = "Explora las experiencias más emocionantes de turismo de naturaleza y aventura en Jalisco, México"
+    hero_slides: List[dict] = []
+    whatsapp_number: str = ""
+    whatsapp_visible: bool = False
     updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 
@@ -142,6 +151,9 @@ class SiteSettingsUpdate(BaseModel):
     hero_image: Optional[str] = None
     hero_title: Optional[str] = None
     hero_subtitle: Optional[str] = None
+    hero_slides: Optional[List[dict]] = None
+    whatsapp_number: Optional[str] = None
+    whatsapp_visible: Optional[bool] = None
 
 
 class Categoria(BaseModel):

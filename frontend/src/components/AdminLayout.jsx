@@ -66,7 +66,7 @@ const AdminLayout = ({ children }) => {
   return (
     <div className="min-h-screen bg-stone-100" data-testid="admin-layout">
       {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between">
+      <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between">
         <button
           onClick={() => setSidebarOpen(true)}
           className="p-2"
@@ -79,6 +79,15 @@ const AdminLayout = ({ children }) => {
           <LogOut className="w-5 h-5" />
         </button>
       </div>
+
+      {/* Sidebar Overlay (mobile) - must be before sidebar in DOM */}
+      {sidebarOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setSidebarOpen(false)}
+          data-testid="sidebar-overlay"
+        />
+      )}
 
       {/* Sidebar */}
       <aside
@@ -153,14 +162,6 @@ const AdminLayout = ({ children }) => {
           </button>
         </div>
       </aside>
-
-      {/* Sidebar Overlay (mobile) */}
-      {sidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
 
       {/* Main Content */}
       <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">{children}</main>

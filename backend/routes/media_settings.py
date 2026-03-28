@@ -163,6 +163,11 @@ async def update_settings(data: SiteSettingsUpdate, user=Depends(get_current_use
     update_data = {k: v for k, v in data.model_dump().items() if v is not None}
     update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
     update_data["id"] = "site_settings"
+    # Handle boolean fields explicitly (False should be saved, not skipped)
+    for bool_key in ["whatsapp_visible"]:
+        val = getattr(data, bool_key)
+        if val is not None:
+            update_data[bool_key] = val
     await db.settings.update_one({"id": "site_settings"}, {"$set": update_data}, upsert=True)
     settings = await db.settings.find_one({"id": "site_settings"}, {"_id": 0})
     if isinstance(settings.get("updated_at"), str):

@@ -232,47 +232,70 @@ const AdminNosotros = () => {
             </div>
           </div>
 
-          {/* Custom Stats */}
+          {/* Custom Stats / Numeralia */}
           <div className="bg-white rounded-2xl shadow-sm p-6">
             <h3 className="font-outfit font-bold text-lg mb-4 flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-forest" />
-              Estadísticas Personalizadas
+              Numeralia / Estadísticas
             </h3>
             <p className="text-sm text-stone-500 mb-4">
-              Estas se muestran junto a las estadísticas automáticas
-              (empresas, actividades)
+              Estas estadísticas se muestran en el Index (nombre corto) y en
+              Nosotros (nombre largo). Las cifras de Empresas y Actividades se
+              calculan automáticamente.
             </p>
             <div className="space-y-3 mb-4">
               {(settings.stats || []).map((stat, i) => (
                 <div
                   key={i}
-                  className="flex items-center gap-2 bg-stone-50 p-3 rounded-xl"
+                  className="bg-stone-50 p-4 rounded-xl space-y-2"
                 >
-                  <input
-                    type="text"
-                    value={stat.value}
-                    onChange={(e) => updateStat(i, "value", e.target.value)}
-                    placeholder="50+"
-                    className="w-24 px-3 py-2 rounded-lg border border-stone-200 bg-white text-sm font-bold focus:outline-none focus:border-forest"
-                  />
-                  <input
-                    type="text"
-                    value={stat.label}
-                    onChange={(e) => updateStat(i, "label", e.target.value)}
-                    placeholder="Destinos Naturales"
-                    className="flex-1 px-3 py-2 rounded-lg border border-stone-200 bg-white text-sm focus:outline-none focus:border-forest"
-                  />
-                  <button
-                    onClick={() => removeStat(i)}
-                    className="text-red-400 hover:text-red-600 text-sm px-2"
-                  >
-                    Quitar
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={stat.value}
+                      onChange={(e) => updateStat(i, "value", e.target.value)}
+                      placeholder="50+"
+                      data-testid={`stat-value-${i}`}
+                      className="w-24 px-3 py-2 rounded-lg border border-stone-200 bg-white text-sm font-bold focus:outline-none focus:border-forest"
+                    />
+                    <span className="text-stone-400 text-xs flex-shrink-0">Valor</span>
+                    <button
+                      onClick={() => removeStat(i)}
+                      className="text-red-400 hover:text-red-600 text-sm px-2 ml-auto"
+                    >
+                      Quitar
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                      <label className="block text-xs text-stone-500 mb-1">Nombre corto (Index)</label>
+                      <input
+                        type="text"
+                        value={stat.short_label || ""}
+                        onChange={(e) => updateStat(i, "short_label", e.target.value)}
+                        placeholder="Destinos"
+                        data-testid={`stat-short-${i}`}
+                        className="w-full px-3 py-2 rounded-lg border border-stone-200 bg-white text-sm focus:outline-none focus:border-forest"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs text-stone-500 mb-1">Nombre largo (Nosotros)</label>
+                      <input
+                        type="text"
+                        value={stat.label || ""}
+                        onChange={(e) => updateStat(i, "label", e.target.value)}
+                        placeholder="Destinos Naturales"
+                        data-testid={`stat-long-${i}`}
+                        className="w-full px-3 py-2 rounded-lg border border-stone-200 bg-white text-sm focus:outline-none focus:border-forest"
+                      />
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
             <button
               onClick={addStat}
+              data-testid="add-stat-btn"
               className="text-forest text-sm font-medium hover:underline"
             >
               + Agregar estadística

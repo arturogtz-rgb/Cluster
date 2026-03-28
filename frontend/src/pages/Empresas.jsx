@@ -10,15 +10,31 @@ import { PageSEO } from "../components/SEO";
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 const PER_PAGE = 12;
 
+const CATEGORY_IMAGES = {
+  "Capacitación": "https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920",
+  "Operadora de aventura": "https://images.unsplash.com/photo-1632614567386-465d63c603bb?w=1920",
+  "Parque acuático": "https://images.unsplash.com/photo-1596479550496-d4eb09f60a99?w=1920",
+  "Hospedaje": "https://images.unsplash.com/photo-1727818861050-8ec7c31eee78?w=1920",
+  "Parque de aventura": "https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920",
+};
+
 const Empresas = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [empresas, setEmpresas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [categorias, setCategorias] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(
     searchParams.get("categoria") || null
   );
+
+  useEffect(() => {
+    axios.get(`${API}/categorias`).then(res => {
+      const cats = res.data?.categorias;
+      if (Array.isArray(cats)) setCategorias(cats);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const fetchEmpresas = async () => {
@@ -62,9 +78,12 @@ const Empresas = () => {
     currentPage * PER_PAGE
   );
 
+  const selectedCatData = categorias.find(c => c.nombre === selectedCategory);
+  const categoryHeroImage = selectedCatData?.imagen_url || CATEGORY_IMAGES[selectedCategory] || null;
+
   return (
     <div
-      className="min-h-screen pt-24 md:pt-32 pb-16"
+      className="min-h-screen pb-16"
       data-testid="empresas-page"
     >
       <PageSEO
@@ -72,19 +91,49 @@ const Empresas = () => {
         description="Explora el directorio completo de empresas de turismo de naturaleza y aventura en Jalisco. Operadoras, parques, capacitación y más."
         url="/empresas"
       />
-      {/* Hero Header */}
+
+      {/* Dynamic Hero by Category */}
+      {selectedCategory && categoryHeroImage ? (
+        <div className="relative h-[35vh] w-full overflow-hidden mb-8" data-testid="category-hero">
+          <img
+            src={categoryHeroImage}
+            alt={selectedCategory}
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          <div className="absolute bottom-8 left-6 md:left-12 z-10">
+            <h1
+              className="font-outfit font-bold text-3xl sm:text-4xl md:text-5xl text-white mb-2"
+              data-testid="empresas-title"
+            >
+              {selectedCategory}
+            </h1>
+            <p className="font-inter text-white/80 text-base md:text-lg">
+              Empresas de {selectedCategory.toLowerCase()} en Jalisco
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="pt-24 md:pt-32" />
+      )}
+
+      {/* Header */}
       <div className="px-6 md:px-12 mb-12">
         <div className="max-w-7xl mx-auto text-center">
-          <h1
-            className="font-outfit font-bold text-3xl sm:text-4xl md:text-5xl text-stone-900 mb-4"
-            data-testid="empresas-title"
-          >
-            Directorio de Empresas
-          </h1>
-          <p className="font-inter text-stone-600 text-base md:text-lg max-w-2xl mx-auto mb-8">
-            Descubre las mejores empresas de turismo de naturaleza y aventura en
-            Jalisco
-          </p>
+          {!selectedCategory && (
+            <>
+              <h1
+                className="font-outfit font-bold text-3xl sm:text-4xl md:text-5xl text-stone-900 mb-4"
+                data-testid="empresas-title"
+              >
+                Directorio de Empresas
+              </h1>
+              <p className="font-inter text-stone-600 text-base md:text-lg max-w-2xl mx-auto mb-8">
+                Descubre las mejores empresas de turismo de naturaleza y aventura en
+                Jalisco
+              </p>
+            </>
+          )}
 
           <div className="mb-8">
             <SearchBar

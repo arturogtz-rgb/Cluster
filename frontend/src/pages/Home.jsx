@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { ArrowRight, Mountain, Users, Award, Leaf, MapPin } from "lucide-react";
+import { ArrowRight, Mountain, Users, Award, Leaf, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import CompanyCard from "../components/CompanyCard";
 import { PageSEO, OrganizationSEO } from "../components/SEO";
 
@@ -38,17 +38,22 @@ const CATEGORY_IMAGES = [
   },
 ];
 
-const STATS = [
+const DEFAULT_STATS = [
   { icon: Mountain, value: "50+", label: "Destinos" },
   { icon: Users, value: "10K+", label: "Visitantes" },
   { icon: Award, value: "20+", label: "Empresas" },
   { icon: Leaf, value: "100%", label: "Sustentable" },
 ];
 
+const STAT_ICONS = [Mountain, Users, Award, Leaf, MapPin];
+
 const Home = () => {
   const [empresasDestacadas, setEmpresasDestacadas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroLogoHidden, setHeroLogoHidden] = useState(false);
+  const [heroSlides, setHeroSlides] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [numeralia, setNumeralia] = useState(DEFAULT_STATS);
   const [settings, setSettings] = useState({
     hero_image: DEFAULT_HERO_IMAGE,
     hero_title: "Descubre la Aventura",
@@ -67,17 +72,52 @@ const Home = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Auto-rotate carousel
+  useEffect(() => {
+    if (heroSlides.length <= 1) return;
+    const timer = setInterval(() => {
+      setCurrentSlide(prev => (prev + 1) % heroSlides.length);
+    }, 6000);
+    return () => clearInterval(timer);
+  }, [heroSlides.length]);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [settingsRes, catRes, empresasRes] = await Promise.allSettled([
+        const [settingsRes, catRes, empresasRes, nosotrosRes] = await Promise.allSettled([
           axios.get(`${API}/settings`),
           axios.get(`${API}/categorias`),
           axios.get(`${API}/empresas-destacadas`),
+          axios.get(`${API}/nosotros-settings`),
         ]);
 
         if (settingsRes.status === "fulfilled" && settingsRes.value?.data) {
-          setSettings(prev => ({ ...prev, ...settingsRes.value.data }));
+          const sData = settingsRes.value.data;
+          setSettings(prev => ({ ...prev, ...sData }));
+          // Build carousel slides
+          const slides = Array.isArray(sData.hero_slides) && sData.hero_slides.length > 0
+            ? sData.hero_slides.filter(s => s.image)
+            : [{ image: sData.hero_image || DEFAULT_HERO_IMAGE, title: sData.hero_title || "Descubre la Aventura", subtitle: sData.hero_subtitle || "" }];
+          // Inherit text from first slide for slides without text
+          const firstSlide = slides[0] || {};
+          const resolvedSlides = slides.map(s => ({
+            image: s.image,
+            title: s.title || firstSlide.title || "",
+            subtitle: s.subtitle || firstSlide.subtitle || "",
+          }));
+          setHeroSlides(resolvedSlides);
+        }
+
+        // Build numeralia from nosotros settings
+        if (nosotrosRes.status === "fulfilled" && nosotrosRes.value?.data) {
+          const nData = nosotrosRes.value.data;
+          if (Array.isArray(nData.stats) && nData.stats.length > 0) {
+            setNumeralia(nData.stats.map((s, i) => ({
+              icon: STAT_ICONS[i % STAT_ICONS.length],
+              value: s.value,
+              label: s.short_label || s.label || "",
+            })));
+          }
         }
 
         if (catRes.status === "fulfilled") {
@@ -110,6 +150,8 @@ const Home = () => {
     fetchData();
   }, []);
 
+  const activeSlide = heroSlides[currentSlide] || { image: settings.hero_image, title: settings.hero_title, subtitle: settings.hero_subtitle };
+
   return (
     <div className="min-h-screen" data-testid="home-page">
       <PageSEO
@@ -118,34 +160,68 @@ const Home = () => {
         url="/"
       />
       <OrganizationSEO />
-      {/* Hero Section */}
+      {/* Hero Section - Carousel */}
       <section className="relative h-[50vh] w-full overflow-hidden" data-testid="hero-section">
-        {/* Background Image */}
-        <div className="absolute inset-0">
-          <img
-            src={settings.hero_image}
-            alt="Paisaje de Jalisco"
-            className="w-full h-full object-cover"
-          />
-          {/* Improved gradient overlay for better text readability */}
-          <div 
-            className="absolute inset-0"
-            style={{
-              background: `linear-gradient(
-                to top,
-                rgba(0, 0, 0, 0.85) 0%,
-                rgba(0, 0, 0, 0.6) 25%,
-                rgba(0, 0, 0, 0.3) 50%,
-                rgba(0, 0, 0, 0.1) 75%,
-                transparent 100%
-              )`
-            }}
-          />
-        </div>
+        {/* Background Images */}
+        {heroSlides.map((slide, index) => (
+          <div
+            key={index}
+            className="absolute inset-0 transition-opacity duration-1000"
+            style={{ opacity: index === currentSlide ? 1 : 0 }}
+          >
+            <img
+              src={slide.image}
+              alt={`Hero ${index + 1}`}
+              className="w-full h-full object-cover"
+            />
+          </div>
+        ))}
+        {/* Gradient overlay */}
+        <div 
+          className="absolute inset-0 z-10"
+          style={{
+            background: `linear-gradient(
+              to top,
+              rgba(0, 0, 0, 0.85) 0%,
+              rgba(0, 0, 0, 0.6) 25%,
+              rgba(0, 0, 0, 0.3) 50%,
+              rgba(0, 0, 0, 0.1) 75%,
+              transparent 100%
+            )`
+          }}
+        />
+
+        {/* Carousel Controls */}
+        {heroSlides.length > 1 && (
+          <>
+            <button
+              onClick={() => setCurrentSlide(prev => (prev - 1 + heroSlides.length) % heroSlides.length)}
+              className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-colors"
+              data-testid="hero-carousel-prev"
+            >
+              <ChevronLeft className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setCurrentSlide(prev => (prev + 1) % heroSlides.length)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white hover:bg-white/40 transition-colors"
+              data-testid="hero-carousel-next"
+            >
+              <ChevronRight className="w-5 h-5" />
+            </button>
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+              {heroSlides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setCurrentSlide(i)}
+                  className={`h-1.5 rounded-full transition-all ${i === currentSlide ? "bg-white w-8" : "bg-white/50 w-3 hover:bg-white/70"}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
 
         {/* Hero Content */}
         <div className="absolute bottom-10 left-6 md:left-12 z-20 max-w-4xl">
-          {/* Large Logo - visible initially, fades on scroll */}
           <div 
             className={`mb-4 opacity-0 animate-fade-in-up hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
             style={{ animationDelay: "200ms", animationFillMode: "forwards" }}
@@ -165,8 +241,8 @@ const Home = () => {
             style={{ animationDelay: "400ms", animationFillMode: "forwards" }}
             data-testid="hero-title"
           >
-            {settings.hero_title.split(" ").slice(0, -1).join(" ")}<br />
-            <span className="text-adventure-light">{settings.hero_title.split(" ").slice(-1)}</span>
+            {activeSlide.title.split(" ").slice(0, -1).join(" ")}<br />
+            <span className="text-adventure-light">{activeSlide.title.split(" ").slice(-1)}</span>
           </h1>
           
           <p 
@@ -174,7 +250,7 @@ const Home = () => {
             style={{ animationDelay: "600ms", animationFillMode: "forwards" }}
             data-testid="hero-subtitle"
           >
-            {settings.hero_subtitle}
+            {activeSlide.subtitle}
           </p>
           
           <div 
@@ -199,21 +275,14 @@ const Home = () => {
             </Link>
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 animate-bounce">
-          <div className="w-6 h-10 rounded-full border-2 border-white/50 flex items-start justify-center p-2">
-            <div className="w-1.5 h-3 bg-white/80 rounded-full" />
-          </div>
-        </div>
       </section>
 
-      {/* Stats Section */}
+      {/* Stats Section - Dynamic Numeralia */}
       <section className="py-16 md:py-24 bg-white" data-testid="stats-section">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
-            {STATS.map((stat, index) => {
-              const Icon = stat.icon;
+            {numeralia.map((stat, index) => {
+              const Icon = stat.icon || STAT_ICONS[index % STAT_ICONS.length];
               return (
                 <div 
                   key={index} 

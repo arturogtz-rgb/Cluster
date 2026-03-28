@@ -13,6 +13,7 @@ import {
   Heart,
   Compass,
   ChevronDown,
+  Award,
 } from "lucide-react";
 import { PageSEO } from "../components/SEO";
 
@@ -33,6 +34,7 @@ const DEFAULT_NOSOTROS_HERO = "https://images.unsplash.com/photo-1551632811-5617
 const Nosotros = () => {
   const [settings, setSettings] = useState(null);
   const [stats, setStats] = useState({ empresas: 0, actividades: 0 });
+  const [customStats, setCustomStats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [formSending, setFormSending] = useState(false);
   const [form, setForm] = useState({
@@ -52,6 +54,9 @@ const Nosotros = () => {
           axios.get(`${API}/actividades`),
         ]);
         setSettings(settingsRes.data);
+        if (Array.isArray(settingsRes.data.stats)) {
+          setCustomStats(settingsRes.data.stats);
+        }
         setStats({
           empresas: empresasRes.data.length,
           actividades: actividadesRes.data.length,
@@ -161,28 +166,19 @@ const Nosotros = () => {
       <section className="bg-white border-b border-stone-100">
         <div className="max-w-5xl mx-auto px-6 py-10">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
-            {[
-              {
-                icon: Mountain,
-                value: "50+",
-                label: "Destinos Naturales",
-              },
-              {
-                icon: Users,
-                value: `${stats.empresas}+`,
-                label: "Empresas Asociadas",
-              },
-              {
-                icon: TreePine,
-                value: `${stats.actividades}`,
-                label: "Actividades",
-              },
-              {
-                icon: Leaf,
-                value: "100%",
-                label: "Compromiso Sustentable",
-              },
-            ].map((stat, i) => {
+            {(customStats.length > 0
+              ? customStats.map((s, i) => ({
+                  icon: [Mountain, Users, TreePine, Leaf, Award][i % 5],
+                  value: s.value,
+                  label: s.label || s.short_label || "",
+                }))
+              : [
+                  { icon: Mountain, value: "50+", label: "Destinos Naturales" },
+                  { icon: Users, value: `${stats.empresas}+`, label: "Empresas Asociadas" },
+                  { icon: TreePine, value: `${stats.actividades}`, label: "Actividades" },
+                  { icon: Leaf, value: "100%", label: "Compromiso Sustentable" },
+                ]
+            ).map((stat, i) => {
               const Icon = stat.icon;
               return (
                 <div key={i}>

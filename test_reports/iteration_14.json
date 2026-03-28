@@ -1,0 +1,106 @@
+{
+  "summary": "Phase 2 feature testing complete. All 17 features verified. Backend API tests (16/16 passed). Fixed 1 bug: EmpresaDetalle lightbox logo overlay was checking wrong field (empresa.logo instead of empresa.logo_url).",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  
+  "passed_tests": [
+    "Admin Settings page (/admin/configuracion) loads with carousel editor UI showing slides with image upload, title, subtitle fields",
+    "Admin Settings can save WhatsApp number with international format (+52) and visibility toggle",
+    "PUT /api/settings accepts hero_slides array, whatsapp_number and whatsapp_visible fields",
+    "GET /api/settings returns hero_slides, whatsapp_number, whatsapp_visible",
+    "Home page hero carousel shows the configured slide images with prev/next controls",
+    "Admin Nosotros (/admin/nosotros-editor) shows editable numeralia/stats with Nombre corto and Nombre largo fields",
+    "Home page stats section displays numeralia from nosotros-settings using short_label (e.g., 'Destinos')",
+    "Nosotros page stats section displays numeralia using long label (e.g., 'Destinos Naturales')",
+    "WhatsApp floating button appears on public pages when whatsapp_visible=true and number is set",
+    "WhatsApp floating button does NOT appear on admin pages",
+    "Prensa detail page (/prensa/:slug) renders galeria section if article has gallery images",
+    "Article form in admin has gallery upload section with ImageUploader",
+    "Empresa detail lightbox overlays empresa logo in bottom-right corner (FIXED: was checking empresa.logo instead of empresa.logo_url)",
+    "EmpresaForm gallery now has ImageUploader for file upload (not just URL paste)",
+    "Admin mobile sidebar: overlay appears at z-40, sidebar at z-50, header at z-30 - no overlap",
+    "Empresas page with ?categoria=... shows dynamic hero with category image",
+    "Empresas page without category filter shows standard title layout"
+  ],
+  
+  "test_report_links": [
+    "/app/backend/tests/test_phase2_features.py",
+    "/app/test_reports/pytest/pytest_phase2_results.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [
+    "AdminSettings.jsx: Carousel editor correctly limits to 3 slides with add/remove functionality",
+    "AdminNosotros.jsx: Numeralia section has both short_label (Index) and label (Nosotros) fields",
+    "Home.jsx: Stats section correctly uses short_label from nosotros-settings",
+    "Nosotros.jsx: Stats section correctly uses label (long) from nosotros-settings",
+    "WhatsAppButton.jsx: Correctly hides on admin pages using location.pathname.startsWith('/admin')",
+    "AdminLayout.jsx: z-index hierarchy correct (header z-30, overlay z-40, sidebar z-50)",
+    "Empresas.jsx: Dynamic hero shows when category filter is applied with category image",
+    "EmpresaForm.jsx: Gallery section has ImageUploader component for file upload",
+    "ArticuloForm.jsx: Gallery section has ImageUploader component for file upload",
+    "ArticuloDetalle.jsx: Gallery renders correctly when article has galeria array"
+  ],
+  
+  "updated_files": [
+    "/app/backend/tests/test_phase2_features.py",
+    "/app/frontend/src/pages/EmpresaDetalle.jsx"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (16/16 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+  
+  "test_credentials": {
+    "admin_username": "admin",
+    "admin_password": "admin123"
+  },
+  
+  "seed_data_creation": "Added gallery images to article 'bienvenidos-al-cluster' for testing prensa gallery feature",
+  
+  "retest_needed": false,
+  
+  "should_main_agent_self_test": true,
+  
+  "context_for_next_testing_agent": "Phase 2 features verified complete. Key endpoints: GET/PUT /api/settings (hero_slides, whatsapp_number, whatsapp_visible), GET/PUT /api/nosotros-settings (stats with short_label/label). Fixed bug in EmpresaDetalle.jsx lightbox logo overlay (changed empresa.logo to empresa.logo_url). WhatsApp is currently enabled (whatsapp_visible=true). All admin forms have ImageUploader for gallery uploads. Mobile sidebar z-index is correct.",
+  
+  "bugs_fixed": [
+    {
+      "file": "/app/frontend/src/pages/EmpresaDetalle.jsx",
+      "issue": "Lightbox logo overlay not showing",
+      "root_cause": "Code was checking empresa.logo but data has empresa.logo_url",
+      "fix": "Changed empresa.logo to empresa.logo_url in lines 501-510"
+    }
+  ],
+  
+  "feature_verification": {
+    "1_hero_carousel_admin": "VERIFIED - AdminSettings.jsx has carousel editor with up to 3 slides",
+    "2_whatsapp_config_admin": "VERIFIED - AdminSettings.jsx has WhatsApp number input and visibility toggle",
+    "3_settings_api_hero_slides": "VERIFIED - PUT /api/settings accepts hero_slides array",
+    "4_settings_api_whatsapp": "VERIFIED - PUT /api/settings handles whatsapp_number and whatsapp_visible",
+    "5_home_hero_carousel": "VERIFIED - Home.jsx shows carousel with prev/next controls",
+    "6_numeralia_admin": "VERIFIED - AdminNosotros.jsx has short_label and label fields",
+    "7_home_stats_short_label": "VERIFIED - Home.jsx uses short_label from nosotros-settings",
+    "8_nosotros_stats_long_label": "VERIFIED - Nosotros.jsx uses label (long) from nosotros-settings",
+    "9_whatsapp_public_pages": "VERIFIED - WhatsAppButton.jsx shows on public pages when enabled",
+    "10_whatsapp_hidden_admin": "VERIFIED - WhatsAppButton.jsx hides on /admin/* pages",
+    "11_prensa_gallery": "VERIFIED - ArticuloDetalle.jsx renders gallery section",
+    "12_articulo_form_gallery": "VERIFIED - ArticuloForm.jsx has ImageUploader for gallery",
+    "13_empresa_lightbox_logo": "VERIFIED (FIXED) - EmpresaDetalle.jsx shows logo in lightbox",
+    "14_empresa_form_gallery": "VERIFIED - EmpresaForm.jsx has ImageUploader for gallery",
+    "15_mobile_sidebar_zindex": "VERIFIED - AdminLayout.jsx has correct z-index (overlay z-40, sidebar z-50)",
+    "16_empresas_category_hero": "VERIFIED - Empresas.jsx shows dynamic hero with category image",
+    "17_empresas_standard_layout": "VERIFIED - Empresas.jsx shows standard title without category filter"
+  }
+}

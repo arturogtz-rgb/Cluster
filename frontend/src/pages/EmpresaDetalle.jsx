@@ -478,7 +478,7 @@ const EmpresaDetalle = () => {
         </div>
       </section>
 
-      {/* Image Modal */}
+      {/* Image Modal / Lightbox */}
       {selectedImage && (
         <div
           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
@@ -486,16 +486,29 @@ const EmpresaDetalle = () => {
           data-testid="image-modal"
         >
           <button
-            className="absolute top-6 right-6 text-white/80 hover:text-white"
+            className="absolute top-6 right-6 text-white/80 hover:text-white z-10"
             onClick={() => setSelectedImage(null)}
           >
             <X className="w-8 h-8" />
           </button>
-          <img
-            src={selectedImage}
-            alt="Imagen ampliada"
-            className="max-w-full max-h-[90vh] object-contain rounded-lg"
-          />
+          <div className="relative inline-block">
+            <img
+              src={selectedImage}
+              alt="Imagen ampliada"
+              className="max-w-full max-h-[90vh] object-contain rounded-lg"
+            />
+            {/* Logo overlay */}
+            {empresa.logo_url && (
+              <div className="absolute bottom-4 right-4 bg-white/90 backdrop-blur-sm rounded-xl p-2 shadow-lg">
+                <img
+                  src={empresa.logo_url}
+                  alt={empresa.nombre}
+                  className="h-10 w-auto max-w-[120px] object-contain"
+                  data-testid="lightbox-logo"
+                />
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

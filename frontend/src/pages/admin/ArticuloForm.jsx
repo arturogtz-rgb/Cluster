@@ -235,6 +235,50 @@ const ArticuloForm = () => {
               />
             </div>
 
+            {/* Gallery */}
+            <div className="bg-white rounded-2xl shadow-sm p-6">
+              <h2 className="font-outfit font-bold text-lg text-stone-900 mb-4">
+                Galería de Imágenes
+              </h2>
+              <div className="mb-3">
+                <ImageUploader
+                  value=""
+                  onChange={(url) => {
+                    if (url) {
+                      setForm(prev => ({ ...prev, galeria: [...(prev.galeria || []), url] }));
+                    }
+                  }}
+                  category="articulos"
+                  imageType="galeria"
+                  label="Subir imagen a la galería"
+                  token={token}
+                />
+              </div>
+              {form.galeria && form.galeria.length > 0 && (
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  {form.galeria.map((img, i) => (
+                    <div key={i} className="relative group aspect-video">
+                      <img
+                        src={img}
+                        alt=""
+                        className="w-full h-full object-cover rounded-xl"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setForm(prev => ({
+                          ...prev,
+                          galeria: prev.galeria.filter((_, idx) => idx !== i)
+                        }))}
+                        className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity text-xs"
+                      >
+                        Quitar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             {/* Preview */}
             {form.titulo && (
               <div className="bg-white rounded-2xl shadow-sm p-6">

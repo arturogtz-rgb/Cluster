@@ -287,6 +287,24 @@ const EmpresaForm = () => {
                 <label className="block font-inter font-medium text-sm text-stone-700 mb-2">
                   Galería de Imágenes
                 </label>
+
+                {/* Upload button */}
+                <div className="mb-3">
+                  <ImageUploader
+                    value=""
+                    onChange={(url) => {
+                      if (url) {
+                        setForm(prev => ({ ...prev, galeria: [...(prev.galeria || []), url] }));
+                      }
+                    }}
+                    category="empresas"
+                    imageType="galeria"
+                    label="Subir imagen a la galería"
+                    token={token}
+                  />
+                </div>
+
+                {/* URL input (alternative) */}
                 <div className="flex gap-2 mb-3">
                   <input
                     type="url"
@@ -296,18 +314,21 @@ const EmpresaForm = () => {
                       e.key === "Enter" && (e.preventDefault(), addGaleriaImage())
                     }
                     className="flex-1 px-4 py-2.5 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:border-forest text-sm"
-                    placeholder="URL de imagen para la galería"
+                    placeholder="O pega una URL de imagen"
+                    data-testid="gallery-url-input"
                   />
                   <button
                     type="button"
                     onClick={addGaleriaImage}
+                    data-testid="gallery-add-url-btn"
                     className="bg-forest text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-forest-dark transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
+
                 {form.galeria.length > 0 && (
-                  <div className="grid grid-cols-4 gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                     {form.galeria.map((img, i) => (
                       <div key={i} className="relative group aspect-square">
                         <img
