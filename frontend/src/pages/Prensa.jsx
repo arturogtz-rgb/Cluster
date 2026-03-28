@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { Calendar, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { PageSEO } from "../components/SEO";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -25,15 +25,6 @@ const Prensa = () => {
 
     fetchArticulos();
   }, []);
-
-  const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("es-MX", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
 
   return (
     <div className="min-h-screen pt-24 md:pt-32 pb-16" data-testid="prensa-page">
@@ -86,11 +77,6 @@ const Prensa = () => {
 
                   {/* Content */}
                   <div className="p-6">
-                    <div className="flex items-center gap-2 text-stone-500 text-sm mb-3">
-                      <Calendar className="w-4 h-4" />
-                      <span>{formatDate(articulo.created_at)}</span>
-                    </div>
-
                     <h2 className="font-outfit font-bold text-xl text-stone-900 mb-3 group-hover:text-forest transition-colors line-clamp-2">
                       {articulo.titulo}
                     </h2>

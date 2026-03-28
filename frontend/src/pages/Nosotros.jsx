@@ -28,6 +28,8 @@ const VALUES_ICONS = {
   "Pasión por la Tierra": Compass,
 };
 
+const DEFAULT_NOSOTROS_HERO = "https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920";
+
 const Nosotros = () => {
   const [settings, setSettings] = useState(null);
   const [stats, setStats] = useState({ empresas: 0, actividades: 0 });
@@ -108,16 +110,28 @@ const Nosotros = () => {
         url="/nosotros"
       />
       {/* Hero */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-forest">
-        <div className="absolute inset-0 opacity-10">
-          <div
-            className="w-full h-full"
-            style={{
-              backgroundImage:
-                "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-            }}
-          />
-        </div>
+      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden">
+        {/* Background Image */}
+        {(settings?.hero_image || DEFAULT_NOSOTROS_HERO) ? (
+          <div className="absolute inset-0">
+            <img
+              src={settings?.hero_image || DEFAULT_NOSOTROS_HERO}
+              alt="Nosotros Hero"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-forest/75" />
+          </div>
+        ) : (
+          <div className="absolute inset-0 bg-forest">
+            <div
+              className="w-full h-full opacity-10"
+              style={{
+                backgroundImage:
+                  "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
+              }}
+            />
+          </div>
+        )}
         <div className="relative z-10 text-center px-6 py-24 max-w-4xl mx-auto">
           <img
             src={CLUSTER_LOGO}

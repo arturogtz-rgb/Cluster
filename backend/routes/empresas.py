@@ -35,6 +35,15 @@ async def get_empresas(
             empresa["created_at"] = datetime.fromisoformat(empresa["created_at"])
         if isinstance(empresa.get("updated_at"), str):
             empresa["updated_at"] = datetime.fromisoformat(empresa["updated_at"])
+    # Resolve activity IDs to names
+    all_actividades = await db.actividades.find({}, {"_id": 0, "id": 1, "nombre": 1, "slug": 1}).to_list(200)
+    act_map = {}
+    for a in all_actividades:
+        act_map[a["id"]] = a["nombre"]
+        act_map[a.get("slug", "")] = a["nombre"]
+    for empresa in empresas:
+        if empresa.get("actividades"):
+            empresa["actividades"] = [act_map.get(act, act) for act in empresa["actividades"]]
     return empresas
 
 
@@ -49,6 +58,42 @@ async def get_top_viewed_empresas():
     return empresas
 
 
+@router.get("/empresas-destacadas")
+async def get_empresas_destacadas():
+    # Priority: destacada=true first, then top by views, limit 6
+    destacadas = await db.empresas.find(
+        {"activa": True, "destacada": True}, {"_id": 0}
+    ).sort("views", -1).to_list(20)
+    for e in destacadas:
+        if isinstance(e.get("created_at"), str):
+            e["created_at"] = datetime.fromisoformat(e["created_at"])
+        if isinstance(e.get("updated_at"), str):
+            e["updated_at"] = datetime.fromisoformat(e["updated_at"])
+    slugs_used = {e["slug"] for e in destacadas}
+    remaining = 6 - len(destacadas)
+    if remaining > 0:
+        top_views = await db.empresas.find(
+            {"activa": True, "slug": {"$nin": list(slugs_used)}}, {"_id": 0}
+        ).sort("views", -1).limit(remaining).to_list(remaining)
+        for e in top_views:
+            if isinstance(e.get("created_at"), str):
+                e["created_at"] = datetime.fromisoformat(e["created_at"])
+            if isinstance(e.get("updated_at"), str):
+                e["updated_at"] = datetime.fromisoformat(e["updated_at"])
+        destacadas.extend(top_views)
+    result = destacadas[:6]
+    # Resolve activity IDs to names
+    all_actividades = await db.actividades.find({}, {"_id": 0, "id": 1, "nombre": 1, "slug": 1}).to_list(200)
+    act_map = {}
+    for a in all_actividades:
+        act_map[a["id"]] = a["nombre"]
+        act_map[a.get("slug", "")] = a["nombre"]
+    for e in result:
+        if e.get("actividades"):
+            e["actividades"] = [act_map.get(act, act) for act in e["actividades"]]
+    return result
+
+
 @router.get("/empresas/{slug}", response_model=Empresa)
 async def get_empresa(slug: str):
     empresa = await db.empresas.find_one({"slug": slug}, {"_id": 0})
@@ -59,6 +104,14 @@ async def get_empresa(slug: str):
         empresa["created_at"] = datetime.fromisoformat(empresa["created_at"])
     if isinstance(empresa.get("updated_at"), str):
         empresa["updated_at"] = datetime.fromisoformat(empresa["updated_at"])
+    # Resolve activity IDs to names
+    if empresa.get("actividades"):
+        all_actividades = await db.actividades.find({}, {"_id": 0, "id": 1, "nombre": 1, "slug": 1}).to_list(200)
+        act_map = {}
+        for a in all_actividades:
+            act_map[a["id"]] = a["nombre"]
+            act_map[a.get("slug", "")] = a["nombre"]
+        empresa["actividades"] = [act_map.get(act, act) for act in empresa["actividades"]]
     await db.empresas.update_one({"slug": slug}, {"$inc": {"views": 1}})
     return empresa
 

@@ -30,12 +30,26 @@ const EmpresaDetalle = () => {
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [actividadesMap, setActividadesMap] = useState({});
 
   useEffect(() => {
-    const fetchEmpresa = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axios.get(`${API}/empresas/${slug}`);
-        setEmpresa(response.data);
+        const [empresaRes, actividadesRes] = await Promise.allSettled([
+          axios.get(`${API}/empresas/${slug}`),
+          axios.get(`${API}/actividades`),
+        ]);
+        if (empresaRes.status === "fulfilled") {
+          setEmpresa(empresaRes.value.data);
+        }
+        if (actividadesRes.status === "fulfilled") {
+          const acts = actividadesRes.value.data;
+          if (Array.isArray(acts)) {
+            const map = {};
+            acts.forEach(a => { map[a.id] = a.nombre; map[a.slug] = a.nombre; map[a.nombre] = a.nombre; });
+            setActividadesMap(map);
+          }
+        }
       } catch (error) {
         console.error("Error fetching empresa:", error);
         toast.error("No se pudo cargar la información de la empresa");
@@ -43,7 +57,7 @@ const EmpresaDetalle = () => {
         setLoading(false);
       }
     };
-    fetchEmpresa();
+    fetchData();
   }, [slug]);
 
   const handleWhatsAppClick = () => {
@@ -305,7 +319,7 @@ const EmpresaDetalle = () => {
                         key={index}
                         className="activity-tag text-xs md:text-sm px-3 md:px-4 py-1.5 md:py-2 rounded-full"
                       >
-                        {actividad}
+                        {actividadesMap[actividad] || actividad}
                       </span>
                     ))}
                   </div>

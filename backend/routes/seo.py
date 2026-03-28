@@ -10,7 +10,7 @@ router = APIRouter()
 
 @router.get("/sitemap.xml")
 async def generate_sitemap():
-    base_url = os.environ.get("SITE_URL", "https://eco-tourism-cluster.preview.emergentagent.com")
+    base_url = os.environ.get("SITE_URL", "https://jalisco-nature-hub.preview.emergentagent.com")
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
 
     urls = [

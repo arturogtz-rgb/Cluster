@@ -6,7 +6,7 @@ import pytest
 import requests
 import os
 
-BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://eco-tourism-cluster.preview.emergentagent.com')
+BASE_URL = os.environ.get('REACT_APP_BACKEND_URL', 'https://jalisco-nature-hub.preview.emergentagent.com')
 
 class TestAPIEndpointsReturnCorrectTypes:
     """Verify all API endpoints return correct data types (arrays/objects)"""

@@ -73,7 +73,7 @@ const Home = () => {
         const [settingsRes, catRes, empresasRes] = await Promise.allSettled([
           axios.get(`${API}/settings`),
           axios.get(`${API}/categorias`),
-          axios.get(`${API}/empresas?destacada=true`),
+          axios.get(`${API}/empresas-destacadas`),
         ]);
 
         if (settingsRes.status === "fulfilled" && settingsRes.value?.data) {
@@ -92,7 +92,7 @@ const Home = () => {
                 description: cat.descripcion || defaultCat?.description || ""
               };
             });
-            setCategorias(mergedCats.slice(0, 4));
+            setCategorias(mergedCats.slice(0, 8));
           }
         }
 
@@ -119,7 +119,7 @@ const Home = () => {
       />
       <OrganizationSEO />
       {/* Hero Section */}
-      <section className="relative h-screen w-full overflow-hidden" data-testid="hero-section">
+      <section className="relative h-[50vh] w-full overflow-hidden" data-testid="hero-section">
         {/* Background Image */}
         <div className="absolute inset-0">
           <img
@@ -144,24 +144,24 @@ const Home = () => {
         </div>
 
         {/* Hero Content */}
-        <div className="absolute bottom-16 left-6 md:left-12 z-20 max-w-4xl">
+        <div className="absolute bottom-10 left-6 md:left-12 z-20 max-w-4xl">
           {/* Large Logo - visible initially, fades on scroll */}
           <div 
-            className={`mb-6 opacity-0 animate-fade-in-up hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
+            className={`mb-4 opacity-0 animate-fade-in-up hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
             style={{ animationDelay: "200ms", animationFillMode: "forwards" }}
           >
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 inline-block shadow-floating">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-3 inline-block shadow-floating">
               <img
                 src={CLUSTER_LOGO}
                 alt="Clúster de Turismo"
-                className="h-16 md:h-24 w-auto"
+                className="h-12 md:h-16 w-auto"
                 data-testid="hero-logo"
               />
             </div>
           </div>
           
           <h1 
-            className="font-outfit font-black text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-white leading-tight tracking-tight mb-4 opacity-0 animate-fade-in-up"
+            className="font-outfit font-black text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-tight tracking-tight mb-3 opacity-0 animate-fade-in-up"
             style={{ animationDelay: "400ms", animationFillMode: "forwards" }}
             data-testid="hero-title"
           >
@@ -170,7 +170,7 @@ const Home = () => {
           </h1>
           
           <p 
-            className="font-inter text-white/90 text-base md:text-lg max-w-xl mb-8 opacity-0 animate-fade-in-up drop-shadow-lg"
+            className="font-inter text-white/90 text-sm md:text-base max-w-xl mb-5 opacity-0 animate-fade-in-up drop-shadow-lg"
             style={{ animationDelay: "600ms", animationFillMode: "forwards" }}
             data-testid="hero-subtitle"
           >
@@ -178,7 +178,7 @@ const Home = () => {
           </p>
           
           <div 
-            className="flex flex-col sm:flex-row gap-4 opacity-0 animate-fade-in-up"
+            className="flex flex-col sm:flex-row gap-3 opacity-0 animate-fade-in-up"
             style={{ animationDelay: "800ms", animationFillMode: "forwards" }}
           >
             <Link
@@ -248,25 +248,26 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 md:gap-6 justify-items-center max-w-5xl mx-auto">
             {(Array.isArray(categorias) ? categorias : []).map((cat, index) => (
               <Link
                 key={cat.id}
                 to={`/empresas?categoria=${encodeURIComponent(cat.id)}`}
                 data-testid={`category-card-${index}`}
-                className="group relative overflow-hidden rounded-3xl aspect-[3/4] shadow-card transition-all duration-500 hover:shadow-floating hover:-translate-y-1"
+                className="group relative overflow-hidden rounded-2xl md:rounded-3xl aspect-[3/4] shadow-card transition-all duration-500 hover:shadow-floating hover:-translate-y-1 w-full"
               >
                 <img
                   src={cat.image}
                   alt={cat.label}
                   className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                  loading="lazy"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                <div className="absolute bottom-6 left-6 right-6 text-white">
-                  <h3 className="font-outfit font-bold text-xl mb-1 group-hover:text-adventure-light transition-colors">
+                <div className="absolute bottom-4 left-4 right-4 md:bottom-6 md:left-6 md:right-6 text-white">
+                  <h3 className="font-outfit font-bold text-sm md:text-xl mb-0.5 md:mb-1 group-hover:text-adventure-light transition-colors">
                     {cat.label}
                   </h3>
-                  <p className="font-inter text-sm text-white/70">
+                  <p className="font-inter text-xs md:text-sm text-white/70 hidden sm:block">
                     {cat.description}
                   </p>
                 </div>
@@ -282,10 +283,10 @@ const Home = () => {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 md:mb-16">
             <div>
               <h2 className="font-outfit font-bold text-3xl md:text-4xl text-stone-900 mb-4">
-                Empresas Destacadas
+                Empresas más consultadas
               </h2>
               <p className="font-inter text-stone-600 text-base md:text-lg max-w-xl">
-                Conoce a nuestros socios líderes en turismo de naturaleza y aventura
+                Las empresas de turismo de naturaleza y aventura más visitadas por nuestros usuarios
               </p>
             </div>
             <Link
@@ -318,7 +319,7 @@ const Home = () => {
       <section className="py-16 md:py-24 px-6 md:px-12" data-testid="cta-section">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="font-outfit font-bold text-3xl md:text-4xl text-stone-900 mb-6">
-            ¿Eres una empresa de turismo en Jalisco?
+            ¿Eres una empresa de turismo de naturaleza en Jalisco?
           </h2>
           <p className="font-inter text-stone-600 text-base md:text-lg mb-8 max-w-2xl mx-auto">
             Únete al Clúster de Turismo de Naturaleza y Aventura y conecta con miles de visitantes buscando experiencias únicas.
@@ -362,8 +363,9 @@ const Home = () => {
               </Link>
             </div>
           </div>
-          <div className="border-t border-white/10 mt-8 pt-8 text-center text-white/50 text-sm">
-            © 2024 Clúster de Turismo de Naturaleza y Aventura Jalisco. Todos los derechos reservados.
+          <div className="border-t border-white/10 mt-8 pt-8 text-center text-white/50 text-sm space-y-1">
+            <p>© {new Date().getFullYear()} Clúster de Turismo de Naturaleza y Aventura Jalisco. Todos los derechos reservados.</p>
+            <p>Sitio desarrollado por Aventúrate Por Jalisco</p>
           </div>
         </div>
       </footer>

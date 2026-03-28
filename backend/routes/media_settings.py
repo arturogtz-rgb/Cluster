@@ -180,6 +180,7 @@ async def get_nosotros_settings():
             "valores": ["Sustentabilidad", "Seguridad", "Comunidad", "Pasión por la Tierra"],
             "cta_titulo": "¿Quieres unirte al Clúster?",
             "cta_texto": "Si tu empresa ofrece servicios de turismo de naturaleza y aventura en Jalisco, te invitamos a formar parte de nuestra red.",
+            "hero_image": "https://images.unsplash.com/photo-1551632811-561732d1e306?w=1920",
         }
     return settings
 
