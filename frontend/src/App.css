@@ -1,4 +1,4 @@
-/* Hero logo fade effect */
+/* Hero logo fade effect on scroll */
 .hero-logo-large {
     transition: opacity 0.5s ease-out, transform 0.5s ease-out;
 }

@@ -222,26 +222,25 @@ const Home = () => {
           </>
         )}
 
-        {/* Hero Content */}
-        <div className="absolute bottom-16 left-6 md:left-12 z-20 max-w-4xl">
-          {/* Large Logo */}
-          <div 
-            className={`mb-6 hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
-            style={{ animation: "fade-in-up 0.6s ease-out 0.2s forwards", opacity: 0 }}
-          >
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 inline-block shadow-floating">
-              <img
-                src={CLUSTER_LOGO}
-                alt="Clúster de Turismo"
-                className="h-16 md:h-24 w-auto"
-                data-testid="hero-logo"
-              />
-            </div>
+        {/* Logo - Top Left, always visible */}
+        <div 
+          className={`absolute top-6 left-6 md:top-8 md:left-12 z-20 hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
+          data-testid="hero-logo-container"
+        >
+          <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-3 md:p-4 inline-block shadow-floating">
+            <img
+              src={CLUSTER_LOGO}
+              alt="Clúster de Turismo"
+              className="h-12 sm:h-14 md:h-20 w-auto"
+              data-testid="hero-logo"
+            />
           </div>
-          
+        </div>
+
+        {/* Hero Text Content - Bottom Left */}
+        <div className="absolute bottom-16 left-6 md:left-12 z-20 max-w-4xl">
           <h1 
             className="font-outfit font-black text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-white leading-tight tracking-tight mb-4"
-            style={{ animation: "fade-in-up 0.6s ease-out 0.4s forwards", opacity: 0 }}
             data-testid="hero-title"
           >
             {activeSlide.title.split(" ").slice(0, -1).join(" ")}<br />
@@ -250,16 +249,12 @@ const Home = () => {
           
           <p 
             className="font-inter text-white/90 text-base md:text-lg max-w-xl mb-8 drop-shadow-lg"
-            style={{ animation: "fade-in-up 0.6s ease-out 0.6s forwards", opacity: 0 }}
             data-testid="hero-subtitle"
           >
             {activeSlide.subtitle}
           </p>
           
-          <div 
-            className="flex flex-col sm:flex-row gap-4"
-            style={{ animation: "fade-in-up 0.6s ease-out 0.8s forwards", opacity: 0 }}
-          >
+          <div className="flex flex-col sm:flex-row gap-4">
             <Link
               to="/empresas"
               data-testid="hero-cta-primary"
