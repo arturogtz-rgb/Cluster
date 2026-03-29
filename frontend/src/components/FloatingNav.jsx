@@ -83,13 +83,14 @@ const FloatingNav = () => {
                 key={link.href}
                 to={link.href}
                 data-testid={`nav-link-${link.label.toLowerCase()}`}
-                className={`font-inter text-sm font-medium transition-all duration-300 hover:text-forest ${
+                className={`font-inter text-sm font-medium transition-all duration-300 hover:text-adventure-light ${
                   isActive(link.href)
-                    ? "text-forest font-semibold"
+                    ? isScrolled ? "text-forest font-semibold" : "text-white font-semibold"
                     : isScrolled
                     ? "text-stone-700"
-                    : "text-white drop-shadow-md"
+                    : "text-white/90"
                 }`}
+                style={!isScrolled ? { textShadow: "0 1px 4px rgba(0,0,0,0.6)" } : {}}
               >
                 {link.label}
               </Link>

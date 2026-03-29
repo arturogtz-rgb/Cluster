@@ -176,17 +176,19 @@ const Home = () => {
             />
           </div>
         ))}
-        {/* Gradient overlay */}
+        {/* Gradient overlays - top for menu readability + bottom for content */}
         <div 
           className="absolute inset-0 z-10"
           style={{
             background: `linear-gradient(
-              to top,
-              rgba(0, 0, 0, 0.85) 0%,
-              rgba(0, 0, 0, 0.6) 25%,
-              rgba(0, 0, 0, 0.3) 50%,
-              rgba(0, 0, 0, 0.1) 75%,
-              transparent 100%
+              to bottom,
+              rgba(0, 0, 0, 0.7) 0%,
+              rgba(0, 0, 0, 0.3) 12%,
+              transparent 25%,
+              transparent 50%,
+              rgba(0, 0, 0, 0.3) 65%,
+              rgba(0, 0, 0, 0.7) 85%,
+              rgba(0, 0, 0, 0.9) 100%
             )`
           }}
         />
@@ -224,8 +226,8 @@ const Home = () => {
         <div className="absolute bottom-16 left-6 md:left-12 z-20 max-w-4xl">
           {/* Large Logo */}
           <div 
-            className={`mb-6 opacity-0 animate-fade-in-up hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
-            style={{ animationDelay: "200ms", animationFillMode: "forwards" }}
+            className={`mb-6 hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
+            style={{ animation: "fade-in-up 0.6s ease-out 0.2s forwards", opacity: 0 }}
           >
             <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 inline-block shadow-floating">
               <img
@@ -238,8 +240,8 @@ const Home = () => {
           </div>
           
           <h1 
-            className="font-outfit font-black text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-white leading-tight tracking-tight mb-4 opacity-0 animate-fade-in-up"
-            style={{ animationDelay: "400ms", animationFillMode: "forwards" }}
+            className="font-outfit font-black text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-white leading-tight tracking-tight mb-4"
+            style={{ animation: "fade-in-up 0.6s ease-out 0.4s forwards", opacity: 0 }}
             data-testid="hero-title"
           >
             {activeSlide.title.split(" ").slice(0, -1).join(" ")}<br />
@@ -247,16 +249,16 @@ const Home = () => {
           </h1>
           
           <p 
-            className="font-inter text-white/90 text-base md:text-lg max-w-xl mb-8 opacity-0 animate-fade-in-up drop-shadow-lg"
-            style={{ animationDelay: "600ms", animationFillMode: "forwards" }}
+            className="font-inter text-white/90 text-base md:text-lg max-w-xl mb-8 drop-shadow-lg"
+            style={{ animation: "fade-in-up 0.6s ease-out 0.6s forwards", opacity: 0 }}
             data-testid="hero-subtitle"
           >
             {activeSlide.subtitle}
           </p>
           
           <div 
-            className="flex flex-col sm:flex-row gap-4 opacity-0 animate-fade-in-up"
-            style={{ animationDelay: "800ms", animationFillMode: "forwards" }}
+            className="flex flex-col sm:flex-row gap-4"
+            style={{ animation: "fade-in-up 0.6s ease-out 0.8s forwards", opacity: 0 }}
           >
             <Link
               to="/empresas"

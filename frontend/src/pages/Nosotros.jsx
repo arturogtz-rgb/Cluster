@@ -125,6 +125,8 @@ const Nosotros = () => {
               className="w-full h-full object-cover"
             />
             <div className="absolute inset-0 bg-forest/75" />
+            {/* Top gradient for menu readability */}
+            <div className="absolute inset-0" style={{ background: "linear-gradient(to bottom, rgba(0,0,0,0.5) 0%, transparent 20%)" }} />
           </div>
         ) : (
           <div className="absolute inset-0 bg-forest">

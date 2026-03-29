@@ -96,13 +96,27 @@ const Empresas = () => {
 
       {/* Dynamic Hero by Category */}
       {selectedCategory && categoryHeroImage ? (
-        <div className="relative min-h-[60vh] w-full overflow-hidden mb-8" data-testid="category-hero">
+        <div className="relative h-[50vh] w-full overflow-hidden mb-8" data-testid="category-hero">
           <img
             src={categoryHeroImage}
             alt={selectedCategory}
-            className="w-full h-full object-cover"
+            className="absolute inset-0 w-full h-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+          {/* Top gradient for menu + bottom gradient for text */}
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(
+                to bottom,
+                rgba(0, 0, 0, 0.7) 0%,
+                rgba(0, 0, 0, 0.2) 15%,
+                transparent 30%,
+                transparent 55%,
+                rgba(0, 0, 0, 0.5) 75%,
+                rgba(0, 0, 0, 0.8) 100%
+              )`
+            }}
+          />
           <div className="absolute bottom-8 left-6 md:left-12 z-10">
             <h1
               className="font-outfit font-bold text-3xl sm:text-4xl md:text-5xl text-white mb-2"
