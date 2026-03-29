@@ -161,7 +161,7 @@ const Home = () => {
       />
       <OrganizationSEO />
       {/* Hero Section - Carousel */}
-      <section className="relative min-h-[60vh] w-full overflow-hidden" data-testid="hero-section">
+      <section className="relative h-screen w-full overflow-hidden" data-testid="hero-section">
         {/* Background Images */}
         {heroSlides.map((slide, index) => (
           <div
@@ -221,23 +221,24 @@ const Home = () => {
         )}
 
         {/* Hero Content */}
-        <div className="absolute bottom-8 left-6 md:bottom-12 md:left-12 z-20 max-w-4xl">
+        <div className="absolute bottom-16 left-6 md:left-12 z-20 max-w-4xl">
+          {/* Large Logo */}
           <div 
-            className={`mb-3 md:mb-4 opacity-0 animate-fade-in-up hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
+            className={`mb-6 opacity-0 animate-fade-in-up hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
             style={{ animationDelay: "200ms", animationFillMode: "forwards" }}
           >
-            <div className="bg-white/95 backdrop-blur-sm rounded-xl md:rounded-2xl p-2.5 md:p-3 inline-block shadow-floating">
+            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-4 inline-block shadow-floating">
               <img
                 src={CLUSTER_LOGO}
                 alt="Clúster de Turismo"
-                className="h-14 sm:h-16 md:h-20 w-auto"
+                className="h-16 md:h-24 w-auto"
                 data-testid="hero-logo"
               />
             </div>
           </div>
           
           <h1 
-            className="font-outfit font-black text-3xl sm:text-4xl md:text-5xl lg:text-6xl text-white leading-tight tracking-tight mb-3 opacity-0 animate-fade-in-up"
+            className="font-outfit font-black text-4xl sm:text-5xl md:text-7xl lg:text-8xl text-white leading-tight tracking-tight mb-4 opacity-0 animate-fade-in-up"
             style={{ animationDelay: "400ms", animationFillMode: "forwards" }}
             data-testid="hero-title"
           >
@@ -246,7 +247,7 @@ const Home = () => {
           </h1>
           
           <p 
-            className="font-inter text-white/90 text-sm md:text-base max-w-xl mb-5 opacity-0 animate-fade-in-up drop-shadow-lg"
+            className="font-inter text-white/90 text-base md:text-lg max-w-xl mb-8 opacity-0 animate-fade-in-up drop-shadow-lg"
             style={{ animationDelay: "600ms", animationFillMode: "forwards" }}
             data-testid="hero-subtitle"
           >
@@ -254,7 +255,7 @@ const Home = () => {
           </p>
           
           <div 
-            className="flex flex-col sm:flex-row gap-3 opacity-0 animate-fade-in-up"
+            className="flex flex-col sm:flex-row gap-4 opacity-0 animate-fade-in-up"
             style={{ animationDelay: "800ms", animationFillMode: "forwards" }}
           >
             <Link
@@ -275,9 +276,15 @@ const Home = () => {
             </Link>
           </div>
         </div>
-      </section>
 
+        {/* Scroll indicator */}
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-20 animate-bounce">
       {/* Stats Section - Dynamic Numeralia */}
+          <div className="w-6 h-10 rounded-full border-2 border-white/50 flex items-start justify-center p-2">
+            <div className="w-1.5 h-3 bg-white/80 rounded-full" />
+          </div>
+        </div>
+      </section>
       <section className="py-16 md:py-24 bg-white" data-testid="stats-section">
         <div className="max-w-7xl mx-auto px-6 md:px-12">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
