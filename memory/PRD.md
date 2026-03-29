@@ -1,7 +1,7 @@
 # Clúster de Turismo de Naturaleza y Aventura Jalisco - PRD
 
 ## Descripción del Proyecto
-Sitio web completo para el Clúster de Turismo de Naturaleza y Aventura de Jalisco, México. Incluye directorio de empresas, mapa interactivo, sección de prensa, y panel de administración.
+Sitio web completo para el Clúster de Turismo de Naturaleza y Aventura de Jalisco, México. Incluye directorio de empresas, mapa interactivo geolocalizado, sección de prensa, y panel de administración completo.
 
 ## Stack Técnico
 - **Frontend**: React, Tailwind CSS, Shadcn UI, Recharts, Leaflet
@@ -14,19 +14,19 @@ Sitio web completo para el Clúster de Turismo de Naturaleza y Aventura de Jalis
 /app
 ├── backend/
 │   ├── routes/ (actividades, articulos, auth_routes, categorias, empresas, leads, media_settings, seo, usuarios)
-│   ├── server.py, database.py, models.py, auth.py, seed.py, utils.py
+│   ├── server.py (analytics, mapa/pines, whatsapp-click, leads/export-csv)
+│   ├── database.py, models.py, auth.py, seed.py, utils.py
 ├── frontend/
 │   ├── src/pages/ (Home, Empresas, EmpresaDetalle, Prensa, ArticuloDetalle, Mapa, Nosotros, admin/*)
-│   ├── src/components/ (AdminLayout, CompanyCard, FloatingNav, WhatsAppButton, ImageUploader, etc.)
+│   ├── src/components/ (AdminLayout, CompanyCard, FloatingNav, WhatsAppButton, ImageUploader, ActivityLocationManager, MapPicker, MultiSelectActividades, SEO)
 ```
 
-## Fases del Proyecto
+## Fases del Proyecto - TODAS COMPLETADAS
 
 ### FASE 1: Correcciones Críticas y Ajustes Visuales - COMPLETADA (2026-03-28)
 - [x] Hero Index al 50vh
 - [x] "Empresas más consultadas" (renombrado + top 6 por visitas + prioridad manual)
-- [x] CTA: "¿Eres una empresa de turismo de naturaleza en Jalisco?"
-- [x] Footer: "Sitio desarrollado por Aventúrate Por Jalisco"
+- [x] CTA y footer actualizados
 - [x] Bug fix: nombres de actividades resueltos (no UUIDs)
 - [x] Prensa: fechas eliminadas de tarjetas
 - [x] Nosotros: hero con imagen real
@@ -34,26 +34,41 @@ Sitio web completo para el Clúster de Turismo de Naturaleza y Aventura de Jalis
 
 ### FASE 2: Funcionalidades de Admin y Gestión de Contenido - COMPLETADA (2026-03-28)
 - [x] Hero dinámico: carrusel hasta 3 imágenes con texto en /admin/configuracion
-- [x] Herencia de texto: slides sin texto heredan del slide 1
-- [x] Numeralia editable: Nombre corto (Index) y Nombre largo (Nosotros) en /admin/nosotros-editor
-- [x] WhatsApp global: número con formato internacional (+52), toggle visible/no visible
-- [x] Burbuja flotante WhatsApp en todas las páginas públicas
-- [x] Galería de imágenes en detalle de Prensa (/prensa/:slug)
-- [x] Galería en formulario de artículos (admin)
+- [x] Numeralia editable: Nombre corto (Index) y Nombre largo (Nosotros)
+- [x] WhatsApp global: número con formato internacional, toggle, burbuja flotante
+- [x] Galería de imágenes en detalle de Prensa y formulario de artículos
 - [x] Logo superpuesto en lightbox de galería de empresa
-- [x] Fix botón "Agregar imágenes" (ahora con ImageUploader + URL)
-- [x] Fix menú lateral admin en móvil (z-index: header z-30, overlay z-40, sidebar z-50)
+- [x] Fix botón "Agregar imágenes" (ImageUploader + URL)
+- [x] Fix menú lateral admin en móvil (z-index corregido)
 - [x] Hero dinámico por categoría en /empresas?categoria=...
 
-### FASE 3: Lógica Geo-Localizada - PENDIENTE
-- [ ] Rediseño relación Empresa-Actividad (ubicaciones múltiples)
-- [ ] Mapa interactivo admin para marcar pines por actividad
-- [ ] Mapa general filtra pines por actividad
-- [ ] Perfil empresa muestra todos sus pines
+### FASE 3: Lógica Geo-Localizada + Extras - COMPLETADA (2026-03-29)
+- [x] Rediseño modelo Empresa-Actividad: `ubicaciones_actividades` array de objetos
+- [x] Admin EmpresaForm: Sede Principal (MapPicker) + Puntos de Operación (ActivityLocationManager)
+- [x] Mapa interactivo admin: drag & drop pins por actividad con notas
+- [x] Mapa General (/mapa): Leaflet completo con filtro por actividad, búsqueda, popups con empresa + enlace
+- [x] Perfil Empresa: actividades únicas en texto, mapa Leaflet con todos los pines
+- [x] WhatsApp Clicks tracking silencioso + métrica en Dashboard (6 KPIs)
+- [x] Exportar Leads a CSV (UTF-8 con BOM para Excel, caracteres especiales correctos)
 
-## Backlog
-- Exportar Leads a CSV
-- Onboarding de Editores (email)
+## API Endpoints Clave
+- `GET /api/mapa/pines` - Todos los pines de actividades (filtro: ?actividad=X)
+- `POST /api/analytics/whatsapp-click` - Tracking silencioso de clics
+- `GET /api/leads/export-csv` - Exportación CSV (autenticado)
+- `GET /api/analytics/overview` - Dashboard metrics (incluye whatsapp_clicks)
+- `GET/PUT /api/settings` - Configuración (hero_slides, whatsapp_number, whatsapp_visible)
+- `GET/PUT /api/nosotros-settings` - Numeralia con short_label/label
+- `GET /api/empresas-destacadas` - Top 6 por visitas con prioridad manual
+
+## Modelo de Datos - ubicaciones_actividades
+```json
+empresa.ubicaciones_actividades = [
+  {"actividad_id": "uuid", "actividad_nombre": "Senderismo", "latitud": 20.65, "longitud": -103.34, "nota": "Trail norte"}
+]
+```
+
+## Backlog Futuro
+- Onboarding de Editores (envío de email para crear contraseña)
 - Multi-idioma
 - PWA
 
