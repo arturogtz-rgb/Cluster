@@ -1,121 +1,59 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
 import { Link } from "react-router-dom";
 import axios from "axios";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
-import MarkerClusterGroup from "react-leaflet-cluster";
-import { MapPin, Phone, ExternalLink, Filter, X, TreePine } from "lucide-react";
-import "leaflet/dist/leaflet.css";
+import { Search, Filter, MapPin, ExternalLink, Phone, X } from "lucide-react";
 import L from "leaflet";
+import "leaflet/dist/leaflet.css";
 import { PageSEO } from "../components/SEO";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
-// Fix for default marker icons in React-Leaflet
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
-  iconUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
-  shadowUrl:
-    "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
 });
 
-// Custom marker icon
-const createCustomIcon = (color = "#1a4d2e") => {
-  return L.divIcon({
+const createPinIcon = (color = "#1a4d2e") =>
+  L.divIcon({
     className: "custom-marker",
-    html: `
-      <div style="
-        width: 32px;
-        height: 32px;
-        background: ${color};
-        border-radius: 50% 50% 50% 0;
-        transform: rotate(-45deg);
-        border: 3px solid white;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-      ">
-        <div style="
-          width: 8px;
-          height: 8px;
-          background: white;
-          border-radius: 50%;
-          position: absolute;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-        "></div>
-      </div>
-    `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
-    popupAnchor: [0, -32],
+    html: `<div style="width:30px;height:30px;background:${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.3)"><div style="width:10px;height:10px;background:white;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div></div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 30],
+    popupAnchor: [0, -30],
   });
-};
 
-// Cluster icon creator
-const createClusterCustomIcon = (cluster) => {
-  const count = cluster.getChildCount();
-  let size = "w-10 h-10 text-sm";
-  if (count > 10) size = "w-12 h-12 text-base";
-  if (count > 25) size = "w-14 h-14 text-lg";
-
-  return L.divIcon({
-    html: `<div class="cluster-icon ${size}" style="
-      background: #1a4d2e;
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-family: 'Outfit', sans-serif;
-      border: 3px solid white;
-      box-shadow: 0 4px 15px rgba(26,77,46,0.4);
-    ">${count}</div>`,
-    className: "custom-cluster-icon",
-    iconSize: L.point(40, 40, true),
-  });
-};
-
-// Fly to selected empresa
-const FlyToMarker = ({ position }) => {
+const FitBounds = ({ pins }) => {
   const map = useMap();
   useEffect(() => {
-    if (position) {
-      map.flyTo(position, 14, { duration: 1.2 });
+    if (pins.length > 0) {
+      const bounds = L.latLngBounds(pins.map(p => [p.latitud, p.longitud]));
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 14 });
     }
-  }, [position, map]);
+  }, [pins, map]);
   return null;
 };
 
 const Mapa = () => {
-  const [empresas, setEmpresas] = useState([]);
+  const [pines, setPines] = useState([]);
   const [actividades, setActividades] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedEmpresa, setSelectedEmpresa] = useState(null);
-  const [selectedCategory, setSelectedCategory] = useState(null);
   const [selectedActividad, setSelectedActividad] = useState(null);
-  const [flyTo, setFlyTo] = useState(null);
-
-  const center = [20.6597, -103.3496];
+  const [searchTerm, setSearchTerm] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [empresasRes, actividadesRes] = await Promise.all([
-          axios.get(`${API}/empresas?activa=true`),
-          axios.get(`${API}/actividades?activa=true`),
+        const [pinesRes, actsRes] = await Promise.all([
+          axios.get(`${API}/mapa/pines`),
+          axios.get(`${API}/actividades`),
         ]);
-        const empresasData = Array.isArray(empresasRes.data) ? empresasRes.data : [];
-        const conCoordenadas = empresasData.filter(
-          (e) => e.latitud && e.longitud
-        );
-        setEmpresas(conCoordenadas);
-        const actData = Array.isArray(actividadesRes.data) ? actividadesRes.data : [];
-        setActividades(actData);
+        setPines(Array.isArray(pinesRes.data) ? pinesRes.data : []);
+        setActividades(Array.isArray(actsRes.data) ? actsRes.data : []);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error:", error);
       } finally {
         setLoading(false);
       }
@@ -123,315 +61,219 @@ const Mapa = () => {
     fetchData();
   }, []);
 
-  const filteredEmpresas = empresas.filter((e) => {
-    const matchesCategory =
-      !selectedCategory || e.categoria === selectedCategory;
-    const matchesActividad =
-      !selectedActividad ||
-      (e.actividades && e.actividades.includes(selectedActividad));
-    return matchesCategory && matchesActividad;
-  });
+  const filteredPins = useMemo(() => {
+    let result = pines;
+    if (selectedActividad) {
+      result = result.filter(
+        p => p.actividad_id === selectedActividad || p.actividad_nombre === selectedActividad
+      );
+    }
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        p =>
+          p.empresa_nombre.toLowerCase().includes(term) ||
+          p.actividad_nombre.toLowerCase().includes(term) ||
+          (p.nota || "").toLowerCase().includes(term)
+      );
+    }
+    return result;
+  }, [pines, selectedActividad, searchTerm]);
 
-  const categories = [...new Set(empresas.map((e) => e.categoria))];
-  const hasActiveFilters = selectedCategory || selectedActividad;
+  // Group pins by location for popup (multiple empresas at same point)
+  const groupedPins = useMemo(() => {
+    const map = {};
+    filteredPins.forEach(pin => {
+      const key = `${pin.latitud},${pin.longitud}`;
+      if (!map[key]) {
+        map[key] = { ...pin, empresas: [] };
+      }
+      const existing = map[key].empresas.find(e => e.empresa_slug === pin.empresa_slug);
+      if (!existing) {
+        map[key].empresas.push({
+          empresa_nombre: pin.empresa_nombre,
+          empresa_slug: pin.empresa_slug,
+          empresa_logo: pin.empresa_logo,
+          empresa_telefono: pin.empresa_telefono,
+        });
+      }
+    });
+    return Object.values(map);
+  }, [filteredPins]);
 
-  const handleEmpresaClick = (empresa) => {
-    setSelectedEmpresa(empresa);
-    setFlyTo([empresa.latitud, empresa.longitud]);
-  };
-
-  const clearFilters = () => {
-    setSelectedCategory(null);
-    setSelectedActividad(null);
-  };
+  const selectedActData = actividades.find(a => a.id === selectedActividad || a.nombre === selectedActividad);
 
   return (
-    <div className="min-h-screen pt-20 md:pt-24" data-testid="mapa-page">
+    <div className="min-h-screen" data-testid="mapa-page">
       <PageSEO
-        title="Mapa de Empresas"
-        description="Encuentra empresas de turismo de aventura cerca de ti en Jalisco. Mapa interactivo con filtros por categoría y actividad."
+        title="Mapa de Aventuras"
+        description="Encuentra actividades de turismo de naturaleza y aventura en Jalisco en nuestro mapa interactivo."
         url="/mapa"
       />
-      {/* Header */}
-      <div className="px-6 md:px-12 mb-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="font-outfit font-bold text-3xl sm:text-4xl text-stone-900 mb-2">
-            Mapa de Empresas
-          </h1>
-          <p className="font-inter text-stone-600 text-base mb-6">
-            Encuentra empresas de turismo cerca de ti en Jalisco
-          </p>
 
-          {/* Dual Filters */}
-          <div className="space-y-3 mb-4">
-            {/* Category Filter */}
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <Filter className="w-4 h-4 text-stone-500" />
-                <span className="text-sm font-medium text-stone-700">
-                  Categoría
-                </span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                    !selectedCategory
-                      ? "bg-forest text-white"
-                      : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-                  }`}
-                  data-testid="filter-cat-all"
-                >
-                  Todas ({empresas.length})
-                </button>
-                {categories.map((cat) => (
-                  <button
-                    key={cat}
-                    onClick={() =>
-                      setSelectedCategory(
-                        selectedCategory === cat ? null : cat
-                      )
-                    }
-                    className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                      selectedCategory === cat
-                        ? "bg-forest text-white"
-                        : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-                    }`}
-                    data-testid={`filter-cat-${cat}`}
-                  >
-                    {cat} (
-                    {empresas.filter((e) => e.categoria === cat).length})
-                  </button>
-                ))}
-              </div>
-            </div>
+      {/* Filter Panel */}
+      <div className="fixed top-20 left-4 z-[1000] w-80 max-w-[calc(100vw-2rem)]" data-testid="map-filters">
+        <div className="bg-white/95 backdrop-blur-lg rounded-2xl shadow-floating p-4 space-y-3">
+          <h2 className="font-outfit font-bold text-lg text-stone-900 flex items-center gap-2">
+            <Filter className="w-5 h-5 text-forest" />
+            Filtros del Mapa
+          </h2>
 
-            {/* Activity Filter */}
-            {actividades.length > 0 && (
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <TreePine className="w-4 h-4 text-stone-500" />
-                  <span className="text-sm font-medium text-stone-700">
-                    Actividad
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setSelectedActividad(null)}
-                    className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                      !selectedActividad
-                        ? "bg-teal-600 text-white"
-                        : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-                    }`}
-                    data-testid="filter-act-all"
-                  >
-                    Todas
-                  </button>
-                  {actividades.map((act) => (
-                    <button
-                      key={act.id}
-                      onClick={() =>
-                        setSelectedActividad(
-                          selectedActividad === act.id ? null : act.id
-                        )
-                      }
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all flex items-center gap-1.5 ${
-                        selectedActividad === act.id
-                          ? "text-white"
-                          : "bg-stone-100 text-stone-600 hover:bg-stone-200"
-                      }`}
-                      style={
-                        selectedActividad === act.id
-                          ? { backgroundColor: act.color || "#0d9488" }
-                          : {}
-                      }
-                      data-testid={`filter-act-${act.slug}`}
-                    >
-                      <span
-                        className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-                        style={{
-                          backgroundColor:
-                            selectedActividad === act.id
-                              ? "white"
-                              : act.color || "#0d9488",
-                        }}
-                      />
-                      {act.nombre}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Active filters badge */}
-            {hasActiveFilters && (
-              <button
-                onClick={clearFilters}
-                className="inline-flex items-center gap-1 text-xs text-red-600 hover:text-red-700 font-medium"
-                data-testid="clear-filters-btn"
-              >
-                <X className="w-3 h-3" />
-                Limpiar filtros
-              </button>
-            )}
+          {/* Search */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-stone-400" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Buscar empresa o actividad..."
+              data-testid="map-search"
+              className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-stone-200 bg-white text-sm focus:outline-none focus:border-forest"
+            />
           </div>
+
+          {/* Activity Filter */}
+          <div>
+            <p className="text-xs text-stone-500 mb-2 font-medium">Filtrar por Actividad:</p>
+            <div className="flex flex-wrap gap-1.5 max-h-40 overflow-y-auto">
+              <button
+                onClick={() => setSelectedActividad(null)}
+                data-testid="filter-all"
+                className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all ${
+                  !selectedActividad ? "bg-forest text-white" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                }`}
+              >
+                Todas ({pines.length})
+              </button>
+              {actividades.map(act => {
+                const count = pines.filter(
+                  p => p.actividad_id === act.id || p.actividad_nombre === act.nombre
+                ).length;
+                if (count === 0) return null;
+                return (
+                  <button
+                    key={act.id}
+                    onClick={() => setSelectedActividad(act.id)}
+                    data-testid={`filter-${act.slug}`}
+                    className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all flex items-center gap-1 ${
+                      selectedActividad === act.id ? "text-white shadow-sm" : "bg-stone-100 text-stone-600 hover:bg-stone-200"
+                    }`}
+                    style={selectedActividad === act.id ? { backgroundColor: act.color || "#1a4d2e" } : {}}
+                  >
+                    <span
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{ backgroundColor: selectedActividad === act.id ? "white" : (act.color || "#1a4d2e") }}
+                    />
+                    {act.nombre} ({count})
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Active filter indicator */}
+          {(selectedActividad || searchTerm) && (
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-xs text-stone-500">
+                {filteredPins.length} pin{filteredPins.length !== 1 ? "es" : ""} encontrado{filteredPins.length !== 1 ? "s" : ""}
+              </span>
+              <button
+                onClick={() => { setSelectedActividad(null); setSearchTerm(""); }}
+                className="text-xs text-red-500 hover:text-red-700 flex items-center gap-1"
+              >
+                <X className="w-3 h-3" /> Limpiar
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Map + List */}
-      <div className="px-6 md:px-12 pb-12">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Map */}
-            <div className="lg:col-span-2">
-              <div
-                className="rounded-3xl overflow-hidden shadow-card"
-                style={{ height: "600px" }}
-                data-testid="map-container"
-              >
-                {loading ? (
-                  <div className="skeleton w-full h-full" />
-                ) : (
-                  <MapContainer
-                    center={center}
-                    zoom={10}
-                    style={{ height: "100%", width: "100%" }}
-                    scrollWheelZoom={true}
-                  >
-                    <TileLayer
-                      attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                    />
-                    {flyTo && <FlyToMarker position={flyTo} />}
-                    <MarkerClusterGroup
-                      chunkedLoading
-                      iconCreateFunction={createClusterCustomIcon}
-                      maxClusterRadius={60}
-                      spiderfyOnMaxZoom={true}
-                      showCoverageOnHover={false}
-                      zoomToBoundsOnClick={true}
-                      animate={true}
-                    >
-                      {filteredEmpresas.map((empresa) => (
-                        <Marker
-                          key={empresa.id}
-                          position={[empresa.latitud, empresa.longitud]}
-                          icon={createCustomIcon(
-                            selectedEmpresa?.id === empresa.id
-                              ? "#0284c7"
-                              : "#1a4d2e"
-                          )}
-                          eventHandlers={{
-                            click: () => setSelectedEmpresa(empresa),
-                          }}
-                        >
-                          <Popup>
-                            <div className="p-2 min-w-[220px]">
-                              {(empresa.logo_url || empresa.hero_url) && (
-                                <img
-                                  src={empresa.logo_url || empresa.hero_url}
-                                  alt={empresa.nombre}
-                                  className="w-full h-24 object-cover rounded-lg mb-2"
-                                />
-                              )}
-                              <h3 className="font-outfit font-bold text-base mb-1">
-                                {empresa.nombre}
-                              </h3>
-                              <span className="inline-block bg-forest/10 text-forest text-xs px-2 py-0.5 rounded-full mb-2">
-                                {empresa.categoria}
-                              </span>
-                              <p className="text-stone-600 text-xs line-clamp-2 mb-2">
-                                {empresa.descripcion}
-                              </p>
-                              {empresa.telefono && (
-                                <p className="text-stone-500 text-xs flex items-center gap-1 mb-2">
-                                  <Phone className="w-3 h-3" />
-                                  {empresa.telefono}
-                                </p>
-                              )}
-                              <Link
-                                to={`/empresas/${empresa.slug}`}
-                                className="text-adventure text-xs font-medium flex items-center gap-1 hover:underline"
-                              >
-                                Ver perfil{" "}
-                                <ExternalLink className="w-3 h-3" />
-                              </Link>
-                            </div>
-                          </Popup>
-                        </Marker>
-                      ))}
-                    </MarkerClusterGroup>
-                  </MapContainer>
-                )}
-              </div>
-            </div>
-
-            {/* Company List */}
-            <div className="lg:col-span-1">
-              <div className="bg-white rounded-3xl shadow-card p-4 max-h-[600px] overflow-y-auto">
-                <h3 className="font-outfit font-bold text-lg text-stone-900 mb-4 sticky top-0 bg-white pb-2 z-10">
-                  Empresas ({filteredEmpresas.length})
-                </h3>
-
-                {filteredEmpresas.length === 0 ? (
-                  <p className="text-stone-500 text-sm text-center py-8">
-                    No hay empresas con ubicación registrada para estos filtros
-                  </p>
-                ) : (
-                  <div className="space-y-3">
-                    {filteredEmpresas.map((empresa) => (
-                      <div
-                        key={empresa.id}
-                        onClick={() => handleEmpresaClick(empresa)}
-                        className={`p-3 rounded-xl cursor-pointer transition-all ${
-                          selectedEmpresa?.id === empresa.id
-                            ? "bg-forest/10 border-2 border-forest"
-                            : "bg-stone-50 hover:bg-stone-100 border-2 border-transparent"
-                        }`}
-                        data-testid={`empresa-list-${empresa.slug}`}
-                      >
-                        <div className="flex gap-3">
-                          <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0">
-                            <img
-                              src={
-                                empresa.logo_url ||
-                                empresa.hero_url ||
-                                "https://images.unsplash.com/photo-1551632811-561732d1e306?w=100"
-                              }
-                              alt={empresa.nombre}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-outfit font-semibold text-sm text-stone-900 truncate">
-                              {empresa.nombre}
-                            </h4>
-                            <span className="text-xs text-forest bg-forest/10 px-2 py-0.5 rounded-full inline-block mb-1">
-                              {empresa.categoria}
-                            </span>
-                            {empresa.direccion && (
-                              <p className="text-stone-500 text-xs flex items-center gap-1 truncate">
-                                <MapPin className="w-3 h-3 flex-shrink-0" />
-                                {empresa.direccion}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <Link
-                          to={`/empresas/${empresa.slug}`}
-                          className="mt-2 block text-center text-adventure text-xs font-medium py-1.5 rounded-lg bg-adventure/10 hover:bg-adventure/20 transition-colors"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          Ver perfil completo
-                        </Link>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+      {/* Map */}
+      <div className="h-screen w-full">
+        {loading ? (
+          <div className="h-full flex items-center justify-center bg-stone-100">
+            <div className="text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-4 border-forest border-t-transparent mx-auto mb-4" />
+              <p className="text-stone-500">Cargando mapa...</p>
             </div>
           </div>
-        </div>
+        ) : (
+          <MapContainer
+            center={[20.6597, -103.3496]}
+            zoom={9}
+            style={{ height: "100%", width: "100%" }}
+            scrollWheelZoom={true}
+          >
+            <TileLayer
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+            {filteredPins.length > 0 && <FitBounds pins={filteredPins} />}
+
+            {groupedPins.map((pin, i) => (
+              <Marker
+                key={`${pin.latitud}-${pin.longitud}-${i}`}
+                position={[pin.latitud, pin.longitud]}
+                icon={createPinIcon(pin.actividad_color || "#1a4d2e")}
+              >
+                <Popup className="custom-popup" maxWidth={280}>
+                  <div className="p-1" data-testid="map-popup">
+                    <div className="flex items-center gap-1.5 mb-2">
+                      <MapPin
+                        className="w-4 h-4 flex-shrink-0"
+                        style={{ color: pin.actividad_color || "#1a4d2e" }}
+                      />
+                      <span className="font-bold text-sm text-stone-800">
+                        {pin.actividad_nombre}
+                      </span>
+                    </div>
+
+                    {pin.nota && (
+                      <p className="text-xs text-stone-500 mb-2 italic">{pin.nota}</p>
+                    )}
+
+                    <div className="space-y-2 mt-2">
+                      {pin.empresas.map((emp, j) => (
+                        <div key={j} className="flex items-center gap-2 bg-stone-50 rounded-lg p-2">
+                          {emp.empresa_logo && (
+                            <img
+                              src={emp.empresa_logo}
+                              alt=""
+                              className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+                            />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <Link
+                              to={`/empresas/${emp.empresa_slug}`}
+                              className="text-sm font-semibold text-forest hover:underline block truncate"
+                            >
+                              {emp.empresa_nombre}
+                            </Link>
+                            {emp.empresa_telefono && (
+                              <span className="text-xs text-stone-500 flex items-center gap-1">
+                                <Phone className="w-3 h-3" /> {emp.empresa_telefono}
+                              </span>
+                            )}
+                          </div>
+                          <Link
+                            to={`/empresas/${emp.empresa_slug}`}
+                            className="text-forest hover:text-adventure p-1"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="text-xs text-stone-400 mt-2 text-right">
+                      {pin.latitud.toFixed(4)}, {pin.longitud.toFixed(4)}
+                    </div>
+                  </div>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
+        )}
       </div>
     </div>
   );

@@ -1,0 +1,101 @@
+{
+  "summary": "Phase 3 feature testing complete. All 15 features verified. Backend API tests (19/19 passed). Frontend UI tests all passed. New endpoints /api/mapa/pines, /api/analytics/whatsapp-click, /api/leads/export-csv working correctly. Admin EmpresaForm has Sede Principal and Puntos de Operación sections with ActivityLocationManager. Mapa page uses Leaflet with activity filters. Empresa detail shows Leaflet map with all pins.",
+  
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {
+        "screen": "EmpresaForm",
+        "issues": ["Minor hydration warning in console about <span> inside <select> - cosmetic only, does not affect functionality"]
+      }
+    ]
+  },
+  
+  "passed_tests": [
+    "GET /api/mapa/pines returns all activity pins across empresas (currently 2 HQ pins since no ubicaciones_actividades yet)",
+    "GET /api/mapa/pines?actividad=Senderismo filters by activity name",
+    "POST /api/analytics/whatsapp-click increments counter silently",
+    "GET /api/analytics/overview includes whatsapp_clicks in totales (6 KPIs total)",
+    "GET /api/leads/export-csv returns CSV with UTF-8 BOM, accented characters, correct headers",
+    "GET /api/leads/export-csv requires authentication (returns 401/403 without token)",
+    "Map page (/mapa) loads with Leaflet map, filter panel on left with activity filters",
+    "Map page filter by activity works (buttons change active state)",
+    "Map page search input filters pins by empresa or activity name",
+    "Empresa detail page (/empresas/:slug) shows Leaflet map with all pins instead of iframe",
+    "Empresa detail shows unique activity names (not repeated UUIDs)",
+    "Admin Dashboard shows 6 KPI cards including WA Clicks metric",
+    "Admin Leads page has Export CSV button that downloads file",
+    "Admin EmpresaForm has 'Sede Principal' MapPicker section",
+    "Admin EmpresaForm has 'Puntos de Operación' ActivityLocationManager section",
+    "PUT /api/empresas/:id with ubicaciones_actividades saves pin data correctly",
+    "Empresa model has ubicaciones_actividades field (list of dicts)",
+    "WhatsApp click tracking increments counter in analytics"
+  ],
+  
+  "test_report_links": [
+    "/app/backend/tests/test_phase3_new_features.py",
+    "/app/test_reports/pytest/pytest_phase3_new_results.xml"
+  ],
+  
+  "action_items": [],
+  
+  "critical_code_review_comments": [
+    "server.py: /api/mapa/pines correctly returns HQ pins for empresas without ubicaciones_actividades",
+    "server.py: /api/analytics/whatsapp-click uses upsert pattern for counter",
+    "server.py: /api/leads/export-csv includes UTF-8 BOM (\\ufeff) for Excel compatibility",
+    "models.py: Empresa model has ubicaciones_actividades: List[dict] = []",
+    "Mapa.jsx: Complete rewrite with Leaflet, FitBounds component, glassmorphism filter panel",
+    "EmpresaDetalle.jsx: EmpresaMapView component shows all pins (HQ + activity locations)",
+    "EmpresaForm.jsx: Has both MapPicker for Sede Principal and ActivityLocationManager for Puntos de Operación",
+    "ActivityLocationManager.jsx: Activity tabs, add pin button, map click handler, pin list with notes",
+    "AdminDashboard.jsx: 6 KPI cards including WA Clicks with MessageCircle icon",
+    "AdminLeads.jsx: Export CSV button with handleExportCSV function using blob download",
+    "WhatsAppButton.jsx: Silent tracking with fire-and-forget axios.post().catch(() => {})"
+  ],
+  
+  "updated_files": [
+    "/app/backend/tests/test_phase3_new_features.py"
+  ],
+  
+  "success_rate": {
+    "backend": "100% (19/19 tests passed)",
+    "frontend": "100% (all UI tests passed)"
+  },
+  
+  "test_credentials": {
+    "admin_username": "admin",
+    "admin_password": "admin123"
+  },
+  
+  "seed_data_creation": "No new seed data created. Using existing 3 empresas with HQ coordinates (latitud/longitud). Currently 2 HQ pins visible on map (empresas with coordinates but no ubicaciones_actividades).",
+  
+  "retest_needed": false,
+  
+  "should_main_agent_self_test": true,
+  
+  "context_for_next_testing_agent": "Phase 3 features verified complete. Key new endpoints: GET /api/mapa/pines (returns array of pin objects with empresa and activity info), POST /api/analytics/whatsapp-click (fire-and-forget counter), GET /api/leads/export-csv (authenticated, returns CSV blob with UTF-8 BOM). Currently only 2 HQ pins exist since no ubicaciones_actividades have been added yet. Admin can add activity-specific pins via EmpresaForm > Puntos de Operación section. WhatsApp tracking is working (4+ clicks recorded). The Mapa page was completely rewritten with Leaflet (no longer using iframe). EmpresaDetalle map also uses Leaflet with EmpresaMapView component.",
+  
+  "feature_verification": {
+    "1_mapa_pines_endpoint": "VERIFIED - GET /api/mapa/pines returns array of pins with empresa/activity info",
+    "2_mapa_pines_filter": "VERIFIED - ?actividad=X filters pins by activity name",
+    "3_whatsapp_click_tracking": "VERIFIED - POST /api/analytics/whatsapp-click increments counter",
+    "4_analytics_whatsapp_clicks": "VERIFIED - GET /api/analytics/overview includes whatsapp_clicks in totales",
+    "5_leads_export_csv": "VERIFIED - GET /api/leads/export-csv returns CSV with UTF-8 BOM",
+    "6_csv_headers": "VERIFIED - CSV has headers: Nombre, Email, Empresa, Mensaje, Leído, Fecha",
+    "7_mapa_page_leaflet": "VERIFIED - /mapa uses Leaflet with filter panel",
+    "8_mapa_activity_filters": "VERIFIED - Activity filter buttons work",
+    "9_mapa_search": "VERIFIED - Search input filters pins",
+    "10_empresa_detail_leaflet": "VERIFIED - /empresas/:slug shows Leaflet map with EmpresaMapView",
+    "11_empresa_activity_names": "VERIFIED - Activity names shown (not UUIDs)",
+    "12_dashboard_6_kpis": "VERIFIED - Dashboard shows 6 KPI cards including WA Clicks",
+    "13_leads_export_button": "VERIFIED - Admin Leads page has 'Exportar CSV' button",
+    "14_empresa_form_sede": "VERIFIED - EmpresaForm has 'Sede Principal' section with MapPicker",
+    "15_empresa_form_puntos": "VERIFIED - EmpresaForm has 'Puntos de Operación' with ActivityLocationManager"
+  }
+}

@@ -37,6 +37,8 @@ const WhatsAppButton = () => {
   );
 
   const handleClick = () => {
+    // Silent tracking - fire and forget, doesn't block WhatsApp opening
+    axios.post(`${API}/analytics/whatsapp-click`).catch(() => {});
     window.open(`https://wa.me/${cleanNumber}?text=${message}`, "_blank");
   };
 

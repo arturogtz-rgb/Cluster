@@ -29,6 +29,7 @@ class Empresa(BaseModel):
     email: Optional[str] = None
     social_links: SocialLinks = Field(default_factory=SocialLinks)
     actividades: List[str] = []
+    ubicaciones_actividades: List[dict] = []
     destacada: bool = False
     activa: bool = True
     latitud: Optional[float] = None
@@ -50,6 +51,7 @@ class EmpresaCreate(BaseModel):
     email: Optional[str] = None
     social_links: SocialLinks = Field(default_factory=SocialLinks)
     actividades: List[str] = []
+    ubicaciones_actividades: List[dict] = []
     destacada: bool = False
     activa: bool = True
     latitud: Optional[float] = None
@@ -69,6 +71,7 @@ class EmpresaUpdate(BaseModel):
     email: Optional[str] = None
     social_links: Optional[SocialLinks] = None
     actividades: Optional[List[str]] = None
+    ubicaciones_actividades: Optional[List[dict]] = None
     destacada: Optional[bool] = None
     activa: Optional[bool] = None
     latitud: Optional[float] = None

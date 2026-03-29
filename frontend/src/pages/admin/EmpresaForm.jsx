@@ -21,6 +21,7 @@ import {
 import ImageUploader from "../../components/ImageUploader";
 import MapPicker from "../../components/MapPicker";
 import MultiSelectActividades from "../../components/MultiSelectActividades";
+import ActivityLocationManager from "../../components/ActivityLocationManager";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -62,6 +63,7 @@ const EmpresaForm = () => {
       website: "",
     },
     actividades: [],
+    ubicaciones_actividades: [],
     destacada: false,
     activa: true,
     latitud: null,
@@ -86,6 +88,7 @@ const EmpresaForm = () => {
         ...response.data,
         social_links: response.data.social_links || {},
         actividades: response.data.actividades || [],
+        ubicaciones_actividades: response.data.ubicaciones_actividades || [],
         galeria: response.data.galeria || [],
       });
     } catch (error) {
@@ -525,19 +528,38 @@ const EmpresaForm = () => {
               </div>
             </div>
 
-            {/* Location Map Card */}
+            {/* Location Map Card - Sede Principal */}
             <div className="bg-white rounded-2xl shadow-sm p-6">
               <h2 className="font-outfit font-bold text-lg text-stone-900 mb-6 flex items-center gap-2">
                 <MapPin className="w-5 h-5 text-forest" />
-                Ubicación en el Mapa
+                Sede Principal
               </h2>
-
+              <p className="text-sm text-stone-500 mb-4">
+                Ubicación general de la empresa (oficinas / base).
+              </p>
               <MapPicker
                 latitude={form.latitud}
                 longitude={form.longitud}
                 onLocationChange={handleLocationChange}
-                label="Haz clic en el mapa para ubicar la empresa"
-                height="350px"
+                label="Haz clic en el mapa para ubicar la sede"
+                height="250px"
+              />
+            </div>
+
+            {/* Activity Locations Map */}
+            <div className="bg-white rounded-2xl shadow-sm p-6">
+              <h2 className="font-outfit font-bold text-lg text-stone-900 mb-4 flex items-center gap-2">
+                <MapPin className="w-5 h-5 text-adventure" />
+                Puntos de Operación
+              </h2>
+              <p className="text-sm text-stone-500 mb-4">
+                Marca las ubicaciones exactas donde se realizan las actividades.
+                Selecciona una actividad, haz clic en "Agregar pin" y luego clic en el mapa.
+              </p>
+              <ActivityLocationManager
+                selectedActividades={form.actividades}
+                ubicaciones={form.ubicaciones_actividades || []}
+                onChange={(ubicaciones) => setForm({ ...form, ubicaciones_actividades: ubicaciones })}
               />
             </div>
           </div>

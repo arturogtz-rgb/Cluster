@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import axios from "axios";
 import {
@@ -21,6 +21,92 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { EmpresaSEO } from "../components/SEO";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
+
+const createPinIcon = (color = "#1a4d2e") =>
+  L.divIcon({
+    className: "custom-marker",
+    html: `<div style="width:26px;height:26px;background:${color};border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:2px solid white;box-shadow:0 2px 6px rgba(0,0,0,0.3)"><div style="width:8px;height:8px;background:white;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div></div>`,
+    iconSize: [26, 26],
+    iconAnchor: [13, 26],
+    popupAnchor: [0, -26],
+  });
+
+const sedeIcon = L.divIcon({
+  className: "custom-marker",
+  html: `<div style="width:30px;height:30px;background:#1a4d2e;border-radius:50% 50% 50% 0;transform:rotate(-45deg);border:3px solid white;box-shadow:0 3px 8px rgba(0,0,0,0.4)"><div style="width:10px;height:10px;background:#fbbf24;border-radius:50%;position:absolute;top:50%;left:50%;transform:translate(-50%,-50%)"></div></div>`,
+  iconSize: [30, 30],
+  iconAnchor: [15, 30],
+  popupAnchor: [0, -30],
+});
+
+const EmpresaMapView = ({ empresa }) => {
+  const allPins = useMemo(() => {
+    const pins = [];
+    // Add HQ pin
+    if (empresa.latitud && empresa.longitud) {
+      pins.push({ lat: empresa.latitud, lng: empresa.longitud, label: "Sede principal", color: null, isSede: true });
+    }
+    // Add activity pins
+    (empresa.ubicaciones_actividades || []).forEach(ub => {
+      if (ub.latitud && ub.longitud) {
+        pins.push({
+          lat: ub.latitud,
+          lng: ub.longitud,
+          label: ub.actividad_nombre || "Actividad",
+          nota: ub.nota || "",
+          color: "#e07b1a",
+          isSede: false,
+        });
+      }
+    });
+    return pins;
+  }, [empresa]);
+
+  if (allPins.length === 0) return null;
+
+  const center = [allPins[0].lat, allPins[0].lng];
+  const bounds = allPins.length > 1 ? L.latLngBounds(allPins.map(p => [p.lat, p.lng])) : null;
+
+  return (
+    <MapContainer
+      center={center}
+      zoom={12}
+      bounds={bounds ? bounds : undefined}
+      boundsOptions={{ padding: [40, 40] }}
+      style={{ height: "100%", width: "100%" }}
+      scrollWheelZoom={true}
+    >
+      <TileLayer
+        attribution='&copy; OpenStreetMap'
+        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+      />
+      {allPins.map((pin, i) => (
+        <Marker
+          key={i}
+          position={[pin.lat, pin.lng]}
+          icon={pin.isSede ? sedeIcon : createPinIcon(pin.color || "#e07b1a")}
+        >
+          <Popup>
+            <div className="text-sm">
+              <strong>{pin.label}</strong>
+              {pin.nota && <p className="text-xs text-stone-500 mt-1">{pin.nota}</p>}
+            </div>
+          </Popup>
+        </Marker>
+      ))}
+    </MapContainer>
+  );
+};
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
@@ -351,29 +437,28 @@ const EmpresaDetalle = () => {
                 </div>
               )}
 
-              {/* Map */}
-              {empresa.latitud && empresa.longitud && (
+              {/* Map - All Activity Pins */}
+              {((empresa.ubicaciones_actividades && empresa.ubicaciones_actividades.length > 0) || (empresa.latitud && empresa.longitud)) && (
                 <div>
                   <h2 className="font-outfit font-bold text-xl md:text-2xl text-stone-900 mb-4">
-                    Ubicación
+                    Ubicaciones
                   </h2>
-                  <div className="rounded-2xl overflow-hidden h-64 md:h-80 shadow-card">
-                    <iframe
-                      src={`https://www.openstreetmap.org/export/embed.html?bbox=${empresa.longitud - 0.01},${empresa.latitud - 0.01},${empresa.longitud + 0.01},${empresa.latitud + 0.01}&layer=mapnik&marker=${empresa.latitud},${empresa.longitud}`}
-                      className="w-full h-full border-0"
-                      title="Ubicación"
-                      loading="lazy"
+                  <div className="rounded-2xl overflow-hidden h-64 md:h-80 shadow-card" data-testid="empresa-map">
+                    <EmpresaMapView
+                      empresa={empresa}
                     />
                   </div>
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${empresa.latitud},${empresa.longitud}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 mt-3 text-forest font-inter text-sm font-medium hover:underline"
-                  >
-                    <ExternalLink className="w-4 h-4" />
-                    Abrir en Google Maps
-                  </a>
+                  {empresa.latitud && empresa.longitud && (
+                    <a
+                      href={`https://www.google.com/maps/dir/?api=1&destination=${empresa.latitud},${empresa.longitud}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 mt-3 text-forest font-inter text-sm font-medium hover:underline"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                      Abrir sede en Google Maps
+                    </a>
+                  )}
                 </div>
               )}
             </div>

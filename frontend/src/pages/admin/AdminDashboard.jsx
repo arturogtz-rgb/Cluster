@@ -16,6 +16,7 @@ import {
   FolderOpen,
   Tag,
   Users,
+  MessageCircle,
 } from "lucide-react";
 import {
   BarChart,
@@ -132,13 +133,14 @@ const AdminDashboard = () => {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 mb-8" data-testid="kpi-cards">
+      <div className="grid grid-cols-2 lg:grid-cols-6 gap-3 lg:gap-4 mb-8" data-testid="kpi-cards">
         {[
           { label: "Empresas", value: totales.empresas, icon: Building2, color: "text-forest", border: "border-forest/20" },
           { label: "Artículos", value: totales.articulos, icon: Newspaper, color: "text-adventure", border: "border-adventure/20" },
           { label: "Actividades", value: totales.actividades, icon: TreePine, color: "text-teal-600", border: "border-teal-200" },
           { label: "Mensajes", value: totales.leads, icon: Mail, color: "text-blue-600", border: "border-blue-200" },
           { label: "No leídos", value: totales.leads_no_leidos, icon: MailOpen, color: "text-red-500", border: "border-red-200" },
+          { label: "WA Clicks", value: totales.whatsapp_clicks, icon: MessageCircle, color: "text-[#25D366]", border: "border-[#25D366]/20" },
         ].map((kpi) => {
           const Icon = kpi.icon;
           return (

@@ -10,6 +10,7 @@ import {
   Clock,
   CheckCircle,
   Circle,
+  Download,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -74,6 +75,26 @@ const AdminLeads = () => {
 
   const unreadCount = leads.filter((l) => !l.leido).length;
 
+  const handleExportCSV = async () => {
+    try {
+      const response = await axios.get(`${API}/leads/export-csv`, {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: "blob",
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data], { type: "text/csv;charset=utf-8" }));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "leads_cluster_turismo.csv");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("CSV exportado correctamente");
+    } catch (error) {
+      toast.error("Error al exportar CSV");
+    }
+  };
+
   const formatDate = (dateStr) => {
     try {
       const date = new Date(dateStr);
@@ -106,6 +127,14 @@ const AdminLeads = () => {
             )}
           </p>
         </div>
+        <button
+          onClick={handleExportCSV}
+          data-testid="export-csv-btn"
+          className="bg-forest text-white px-5 py-2.5 rounded-full font-semibold text-sm flex items-center gap-2 hover:bg-forest-dark transition-colors shadow-lg w-fit"
+        >
+          <Download className="w-4 h-4" />
+          Exportar CSV
+        </button>
       </div>
 
       {loading ? (
