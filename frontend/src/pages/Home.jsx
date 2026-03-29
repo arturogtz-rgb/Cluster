@@ -161,7 +161,7 @@ const Home = () => {
       />
       <OrganizationSEO />
       {/* Hero Section - Carousel */}
-      <section className="relative h-[50vh] w-full overflow-hidden" data-testid="hero-section">
+      <section className="relative min-h-[60vh] w-full overflow-hidden" data-testid="hero-section">
         {/* Background Images */}
         {heroSlides.map((slide, index) => (
           <div
@@ -221,16 +221,16 @@ const Home = () => {
         )}
 
         {/* Hero Content */}
-        <div className="absolute bottom-10 left-6 md:left-12 z-20 max-w-4xl">
+        <div className="absolute bottom-8 left-6 md:bottom-12 md:left-12 z-20 max-w-4xl">
           <div 
-            className={`mb-4 opacity-0 animate-fade-in-up hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
+            className={`mb-3 md:mb-4 opacity-0 animate-fade-in-up hero-logo-large ${heroLogoHidden ? 'scrolled' : ''}`}
             style={{ animationDelay: "200ms", animationFillMode: "forwards" }}
           >
-            <div className="bg-white/95 backdrop-blur-sm rounded-2xl p-3 inline-block shadow-floating">
+            <div className="bg-white/95 backdrop-blur-sm rounded-xl md:rounded-2xl p-2.5 md:p-3 inline-block shadow-floating">
               <img
                 src={CLUSTER_LOGO}
                 alt="Clúster de Turismo"
-                className="h-12 md:h-16 w-auto"
+                className="h-14 sm:h-16 md:h-20 w-auto"
                 data-testid="hero-logo"
               />
             </div>

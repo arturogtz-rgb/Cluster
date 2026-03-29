@@ -1,7 +1,7 @@
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { Toaster } from "./components/ui/sonner";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useEffect } from "react";
 
 // Pages (eagerly loaded - critical path)
 import Home from "./pages/Home";
@@ -44,10 +44,19 @@ const PageLoader = () => (
   </div>
 );
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+};
+
 function App() {
   return (
     <div className="App min-h-screen bg-limestone">
       <BrowserRouter>
+        <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public Routes */}

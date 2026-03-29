@@ -64,11 +64,13 @@ const Empresas = () => {
 
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
+    setCurrentPage(1);
     if (category) {
       setSearchParams({ categoria: category });
     } else {
       setSearchParams({});
     }
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Pagination
@@ -94,7 +96,7 @@ const Empresas = () => {
 
       {/* Dynamic Hero by Category */}
       {selectedCategory && categoryHeroImage ? (
-        <div className="relative h-[35vh] w-full overflow-hidden mb-8" data-testid="category-hero">
+        <div className="relative min-h-[60vh] w-full overflow-hidden mb-8" data-testid="category-hero">
           <img
             src={categoryHeroImage}
             alt={selectedCategory}
