@@ -51,12 +51,6 @@ async def root():
     return {"message": "Clúster de Turismo de Naturaleza y Aventura Jalisco API"}
 
 
-@api_router.post("/seed")
-async def seed_data():
-    await run_seed()
-    return {"message": "Datos sembrados exitosamente", "admin_credentials": {"username": "admin", "password": "admin123"}}
-
-
 # Analytics endpoints for dashboard
 @api_router.get("/analytics/overview")
 async def get_analytics_overview():
@@ -240,7 +234,7 @@ cors_origins = os.environ.get("CORS_ORIGINS", default_origins).split(",")
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=[o.strip() for o in cors_origins] + ["*"],
+    allow_origins=[o.strip() for o in cors_origins],
     allow_methods=["*"],
     allow_headers=["*"],
 )

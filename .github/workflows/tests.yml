@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  push:
+    branches: [main, mejoras-jul2026]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      mongodb:
+        image: mongo:7
+        ports:
+          - 27017:27017
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          cd backend
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio httpx
+
+      - name: Run tests
+        env:
+          MONGO_URL: mongodb://localhost:27017
+          DB_NAME: turismo_jalisco_test
+          JWT_SECRET: test-secret-key-for-ci-only
+          CORS_ORIGINS: http://localhost
+        run: |
+          cd backend
+          python -m pytest tests/ -v --tb=short

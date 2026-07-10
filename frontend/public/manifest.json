@@ -1,0 +1,31 @@
+{
+  "short_name": "Turismo Jalisco",
+  "name": "Cluster de Turismo de Naturaleza y Aventura Jalisco",
+  "description": "Directorio de empresas de turismo de naturaleza y aventura en Jalisco, Mexico.",
+  "icons": [
+    {
+      "src": "favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    },
+    {
+      "src": "icon-192x192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512x512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#1a4d2e",
+  "background_color": "#fafaf9",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["travel", "tourism"]
+}

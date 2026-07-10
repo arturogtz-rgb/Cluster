@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
@@ -12,6 +12,12 @@ import {
   Search,
   Eye,
   EyeOff,
+  Download,
+  Upload,
+  FileSpreadsheet,
+  X,
+  CheckCircle2,
+  AlertCircle,
 } from "lucide-react";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
@@ -22,6 +28,9 @@ const AdminEmpresas = () => {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("");
+  const [importLoading, setImportLoading] = useState(false);
+  const [importResult, setImportResult] = useState(null);
+  const fileInputRef = useRef(null);
   const token = localStorage.getItem("auth_token");
 
   useEffect(() => {
@@ -58,6 +67,74 @@ const AdminEmpresas = () => {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const response = await axios.get(`${API}/empresas/plantilla`, { responseType: "blob" });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "plantilla_empresas.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      toast.error("Error al descargar plantilla");
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const response = await axios.get(`${API}/empresas/exportar`, {
+        responseType: "blob",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement("a");
+      link.href = url;
+      link.setAttribute("download", "empresas_cluster_turismo.xlsx");
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      toast.success("Exportación completada");
+    } catch (error) {
+      toast.error("Error al exportar");
+    }
+  };
+
+  const handleImport = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setImportLoading(true);
+    setImportResult(null);
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      const response = await axios.post(`${API}/empresas/importar`, formData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      setImportResult(response.data);
+      if (response.data.importadas > 0 || response.data.actualizadas > 0) {
+        toast.success(`Importación completada: ${response.data.importadas} nuevas, ${response.data.actualizadas} actualizadas`);
+        fetchEmpresas();
+      }
+      if (response.data.errores?.length > 0) {
+        toast.warning(`${response.data.errores.length} filas con errores`);
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.detail || "Error al importar archivo");
+    } finally {
+      setImportLoading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const categories = [...new Set((Array.isArray(empresas) ? empresas : []).map((e) => e.categoria))];
 
   const filteredEmpresas = empresas.filter((empresa) => {
@@ -89,6 +166,95 @@ const AdminEmpresas = () => {
           <Plus className="w-4 h-4" />
           Nueva Empresa
         </Link>
+      </div>
+
+      {/* Import / Export Section */}
+      <div className="mb-6 bg-stone-50 rounded-2xl p-5 border border-stone-200">
+        <div className="flex items-center gap-2 mb-3">
+          <FileSpreadsheet className="w-5 h-5 text-forest" />
+          <h2 className="font-outfit font-bold text-stone-800">Importar / Exportar</h2>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleDownloadTemplate}
+            data-testid="download-template-btn"
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-stone-300 bg-white text-stone-700 text-sm font-medium hover:bg-stone-100 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Descargar plantilla
+          </button>
+          <label
+            data-testid="import-file-label"
+            className={`flex items-center gap-2 px-4 py-2 rounded-full border border-forest bg-forest/5 text-forest text-sm font-medium cursor-pointer hover:bg-forest/10 transition-colors ${importLoading ? "opacity-50 pointer-events-none" : ""}`}
+          >
+            <Upload className="w-4 h-4" />
+            {importLoading ? "Importando..." : "Importar Excel"}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".xlsx,.xls"
+              onChange={handleImport}
+              className="hidden"
+              data-testid="import-file-input"
+            />
+          </label>
+          <button
+            onClick={handleExport}
+            data-testid="export-empresas-btn"
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-adventure bg-adventure/5 text-adventure text-sm font-medium hover:bg-adventure/10 transition-colors"
+          >
+            <Download className="w-4 h-4" />
+            Exportar todas
+          </button>
+        </div>
+
+        {/* Import Result Modal */}
+        {importResult && (
+          <div className="mt-4 bg-white rounded-xl border border-stone-200 p-4" data-testid="import-result-panel">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="font-outfit font-bold text-sm text-stone-800">Resultado de importación</h3>
+              <button onClick={() => setImportResult(null)} className="text-stone-400 hover:text-stone-600">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex gap-4 mb-3 text-sm">
+              <span className="flex items-center gap-1 text-green-600">
+                <CheckCircle2 className="w-4 h-4" />
+                {importResult.importadas} nuevas
+              </span>
+              <span className="flex items-center gap-1 text-blue-600">
+                <CheckCircle2 className="w-4 h-4" />
+                {importResult.actualizadas} actualizadas
+              </span>
+              {importResult.errores?.length > 0 && (
+                <span className="flex items-center gap-1 text-red-600">
+                  <AlertCircle className="w-4 h-4" />
+                  {importResult.errores.length} errores
+                </span>
+              )}
+            </div>
+            {importResult.errores?.length > 0 && (
+              <div className="max-h-48 overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-stone-200">
+                      <th className="text-left py-1 px-2 text-stone-500 font-medium">Fila</th>
+                      <th className="text-left py-1 px-2 text-stone-500 font-medium">Motivo</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {importResult.errores.map((err, idx) => (
+                      <tr key={idx} className="border-b border-stone-100">
+                        <td className="py-1.5 px-2 text-stone-600">{err.fila}</td>
+                        <td className="py-1.5 px-2 text-red-600">{err.motivo}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Filters */}

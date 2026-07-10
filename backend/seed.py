@@ -1,16 +1,32 @@
+import os
+import secrets
+import logging
+
 from slugify import slugify
 
 from database import db
 from auth import hash_password
 from models import Usuario, Empresa, SocialLinks, Actividad, Articulo
 
+logger = logging.getLogger(__name__)
+
 
 async def run_seed():
     admin = await db.usuarios.find_one({"username": "admin"})
     if not admin:
+        admin_password = os.environ.get("ADMIN_INITIAL_PASSWORD")
+        if not admin_password:
+            admin_password = secrets.token_urlsafe(16)
+            logger.warning("=" * 60)
+            logger.warning("  ADMIN PASSWORD AUTO-GENERATED (no ADMIN_INITIAL_PASSWORD set)")
+            logger.warning("  Username: admin")
+            logger.warning("  Password: %s", admin_password)
+            logger.warning("  CHANGE THIS PASSWORD IMMEDIATELY after first login.")
+            logger.warning("  This message will NOT appear again.")
+            logger.warning("=" * 60)
         admin_user = Usuario(
             username="admin",
-            password_hash=hash_password("admin123"),
+            password_hash=hash_password(admin_password),
             nombre="Administrador",
             email="",
             role="admin",

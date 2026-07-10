@@ -5,7 +5,12 @@ import jwt
 from datetime import datetime, timezone
 import os
 
-JWT_SECRET = os.environ.get('JWT_SECRET', 'cluster-turismo-jalisco-secret-key-2024')
+JWT_SECRET = os.environ.get('JWT_SECRET')
+if not JWT_SECRET:
+    raise RuntimeError(
+        "JWT_SECRET environment variable is required. "
+        "Set it in backend/.env or backend/.env.production with a strong random value."
+    )
 JWT_ALGORITHM = "HS256"
 
 security = HTTPBearer()
