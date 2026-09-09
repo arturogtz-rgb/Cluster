@@ -22,6 +22,7 @@ from routes.seo import router as seo_router
 from routes.pst_auth import router as pst_auth_router
 from routes.requisitos import router as requisitos_router
 from routes.planes import router as planes_router
+from routes.payments import router as payments_router
 
 from seed import run_seed
 
@@ -50,6 +51,7 @@ api_router.include_router(seo_router)
 api_router.include_router(pst_auth_router)
 api_router.include_router(requisitos_router)
 api_router.include_router(planes_router)
+api_router.include_router(payments_router)
 
 
 @api_router.get("/")

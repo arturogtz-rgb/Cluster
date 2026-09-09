@@ -188,3 +188,30 @@ async def admin_update_empresa_estado(empresa_id: str, data: dict, user=Depends(
 
     await db.empresas.update_one({"id": empresa_id}, {"$set": update})
     return {"status": "ok", "estado": nuevo_estado}
+
+
+@router.post("/admin/suscripciones/{suscripcion_id}/confirmar-transferencia")
+async def admin_confirm_transfer(suscripcion_id: str, user=Depends(require_admin)):
+    """Admin confirms bank transfer received."""
+    sub = await db.suscripciones.find_one({"id": suscripcion_id}, {"_id": 0})
+    if not sub:
+        raise HTTPException(status_code=404, detail="Suscripción no encontrada")
+    if sub.get("estado") != "pendiente_transferencia":
+        raise HTTPException(status_code=400, detail="Esta suscripción no está pendiente de transferencia")
+
+    await db.suscripciones.update_one(
+        {"id": suscripcion_id},
+        {"$set": {"estado": "activa", "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    await db.empresas.update_one(
+        {"id": sub["empresa_id"]},
+        {"$set": {"estado": "pendiente_aprobacion", "updated_at": datetime.now(timezone.utc).isoformat()}},
+    )
+    return {"status": "ok", "message": "Transferencia confirmada"}
+
+
+@router.get("/admin/suscripciones")
+async def admin_get_suscripciones(user=Depends(require_admin)):
+    """Get all subscriptions."""
+    subs = await db.suscripciones.find({}, {"_id": 0}).sort("created_at", -1).to_list(500)
+    return subs

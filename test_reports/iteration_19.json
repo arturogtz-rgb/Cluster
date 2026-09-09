@@ -1,0 +1,36 @@
+{
+  "summary": "Bloque C (Stripe + Bank Transfer + Discount codes) tested end-to-end. Backend: 9/9 pytest tests passing (free plan, bank transfer, discount codes with 100% discount, invalid discount, checkout validation on state, invalid plan_id 404, payment-status 404, admin subscriptions list, and full transfer-confirm flow advancing empresa to pendiente_aprobacion). Frontend /pst/pago shows 3 plan cards (Mensual/Semestral/Anual) all displaying 'Gratis' (3 occurrences), discount code input + Aplicar button, GRATIS2026 code validated and 'descuento aplicado' visible, pay button correctly shows 'Activar plan gratuito' for $0 plan. /pst/pago/exito verifies session_id query param (shows 'Error en el pago' for fake session or missing param). Fixed one critical bug during testing (see below).",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_bloque_c_payments.py",
+    "/app/test_reports/pytest/bloque_c.xml"
+  ],
+  "action_items": [
+    "None – all Bloque C flows verified. Confirm the SiteSettingsUpdate model fix (banco_* fields) matches your intended schema; alternatively consider moving bank fields into a dedicated admin endpoint/collection for cleaner separation."
+  ],
+  "critical_code_review_comments": [
+    "CRITICAL BUG FIXED: SiteSettingsUpdate Pydantic model in /app/backend/models.py did NOT include banco_nombre/banco_clabe/banco_titular/banco_referencia. Frontend AdminSettings 'Banco' tab was silently dropping these fields on PUT /api/settings, so /pst/checkout with metodo_pago=transferencia was returning empty bank details to end users. Added the 4 Optional[str] fields to SiteSettingsUpdate. Verified fix works via test_transfer_returns_bank_details.",
+    "payments.py: `stripe.error.StripeError` (line 227) may not be a valid namespace on newer stripe SDK versions (>=8.0 exposes stripe.StripeError). Consider `except stripe.StripeError` for compatibility.",
+    "payments.py `_activate_subscription_from_stripe` is called from both status-poll and webhook paths but only guards against duplicates using `stripe_subscription_id`; if that field is None (e.g. one-time payment) duplicate subscriptions could be created. Consider also guarding by (empresa_id, payment_transactions.session_id).",
+    "PSTPago.jsx passes `codigo_descuento: null` to the API; backend `if req.codigo_descuento` handles it fine, but sending `undefined` would be cleaner via axios."
+  ],
+  "updated_files": [
+    "/app/backend/models.py (added 4 banco_* Optional fields to SiteSettingsUpdate)",
+    "/app/backend/tests/test_bloque_c_payments.py (new pytest suite for Bloque C)"
+  ],
+  "success_rate": {"backend": "100% (9/9)", "frontend": "100%"},
+  "test_credentials": "Admin admin/admin123. Frontend test PST created dynamically per run via /api/pst/register with TEST_ / pstpayfront_ prefixes.",
+  "seed_data_creation": "Each test run registers a new TEST_ prefixed PST account, uploads a stub PDF as RFC document, submits for payment, and executes the flow. Also creates and deletes temporary paid plans (TEST_Plan_Paid / TEST_Plan_Discount / TEST_Plan_Conf) and one discount code (TEST_C_<ts>).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Bloque C fully working after model fix. Free-plan flow bypasses Stripe correctly. Bank transfer now returns real bank details from settings (fix applied). Discount code with 100% -> status='free'. Admin confirmar-transferencia advances empresa to pendiente_aprobacion. Real Stripe checkout is not exercised because seeded plan prices are $0 (see /pst/checkout lines 137-167 which detects Stripe price.unit_amount == 0 and short-circuits). Test file: /app/backend/tests/test_bloque_c_payments.py (uses REACT_APP_BACKEND_URL from env with sensible default). Note: PUT /api/settings is the endpoint used by admin (NOT /api/admin/settings).",
+  "rca of the issue": "Backend bug: PUT /api/settings uses SiteSettingsUpdate to filter accepted fields, but that model omitted banco_nombre/banco_clabe/banco_titular/banco_referencia. Frontend AdminSettings sent those fields; Pydantic silently ignored them (extra='ignore' default), so bank data was never persisted. When PST later called /pst/checkout with metodo_pago='transferencia', payments.py reads settings.get('banco_nombre','') which returned empty strings. Repro: 1) admin PUT /api/settings with banco_nombre=X. 2) GET /api/settings -> field absent. Fix: added the 4 Optional[str] fields to SiteSettingsUpdate in /app/backend/models.py. Re-verified via test_transfer_returns_bank_details which now asserts the returned banco block matches what was PUT."
+}

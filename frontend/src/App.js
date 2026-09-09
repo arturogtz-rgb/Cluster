@@ -37,6 +37,8 @@ const PSTLogin = lazy(() => import("./pages/pst/PSTLogin"));
 const PSTRegister = lazy(() => import("./pages/pst/PSTRegister"));
 const PSTWizard = lazy(() => import("./pages/pst/PSTWizard"));
 const PSTDashboard = lazy(() => import("./pages/pst/PSTDashboard"));
+const PSTPago = lazy(() => import("./pages/pst/PSTPago"));
+const PSTPaymentSuccess = lazy(() => import("./pages/pst/PSTPaymentSuccess"));
 
 // Components
 import FloatingNav from "./components/FloatingNav";
@@ -293,6 +295,8 @@ function App() {
           <Route path="/registro" element={<PSTRegister />} />
           <Route path="/pst/wizard" element={<PSTWizard />} />
           <Route path="/pst/dashboard" element={<PSTDashboard />} />
+          <Route path="/pst/pago" element={<PSTPago />} />
+          <Route path="/pst/pago/exito" element={<PSTPaymentSuccess />} />
         </Routes>
         <Toaster position="top-right" />
         </Suspense>

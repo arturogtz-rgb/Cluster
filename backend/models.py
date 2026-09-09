@@ -303,6 +303,10 @@ class SiteSettingsUpdate(BaseModel):
     hero_slides: Optional[List[dict]] = None
     whatsapp_number: Optional[str] = None
     whatsapp_visible: Optional[bool] = None
+    banco_nombre: Optional[str] = None
+    banco_clabe: Optional[str] = None
+    banco_titular: Optional[str] = None
+    banco_referencia: Optional[str] = None
 
 
 class Categoria(BaseModel):

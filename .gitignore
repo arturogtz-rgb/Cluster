@@ -37,8 +37,7 @@ dist/
 memory/test_credentials.md
 
 # Test upload artifacts
-backend/uploads/empresas/test*/
-backend/uploads/test*/
+backend/uploads/**/test*/
 
 # Logs and debug files
 npm-debug.log*
