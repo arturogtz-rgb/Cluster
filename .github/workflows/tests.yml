@@ -23,6 +23,11 @@ jobs:
         image: mongo:7
         ports:
           - 27017:27017
+        options: >-
+          --health-cmd="mongosh --eval 'db.runCommand({ ping: 1 })'"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - uses: actions/checkout@v4
@@ -33,22 +38,49 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
+        working-directory: backend
         run: |
-          cd backend
           pip install -r requirements.txt
           pip install pytest pytest-asyncio httpx
 
-      - name: Start backend
+      - name: Verify MongoDB is reachable
         run: |
-          cd backend
-          python -m uvicorn server:app --host 0.0.0.0 --port 8001 &
-          for i in $(seq 1 15); do
-            curl -s http://localhost:8001/api/ > /dev/null 2>&1 && break
+          python3 -c "
+          from pymongo import MongoClient
+          c = MongoClient('mongodb://localhost:27017', serverSelectionTimeoutMS=5000)
+          c.admin.command('ping')
+          print('MongoDB OK')
+          "
+
+      - name: Start backend
+        working-directory: backend
+        run: |
+          python -m uvicorn server:app --host 0.0.0.0 --port 8001 > /tmp/backend.log 2>&1 &
+          echo "Waiting for backend to start..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:8001/api/ > /dev/null 2>&1; then
+              echo "Backend ready after ${i}s"
+              curl -s http://localhost:8001/api/
+              exit 0
+            fi
             sleep 1
           done
-          curl -s http://localhost:8001/api/ || echo "WARNING: backend may not be ready"
+          echo "ERROR: Backend did not start within 30s"
+          echo "=== Backend logs ==="
+          cat /tmp/backend.log
+          exit 1
 
       - name: Run tests
+        working-directory: backend
         run: |
-          cd backend
-          python -m pytest tests/test_pst_affiliation.py tests/test_bloque_d.py tests/test_bloque_c_payments.py -v --tb=short
+          python -m pytest \
+            tests/test_pst_affiliation.py \
+            tests/test_bloque_d.py \
+            tests/test_bloque_c_payments.py \
+            -v --tb=short 2>&1
+
+      - name: Dump backend logs on failure
+        if: failure()
+        run: |
+          echo "=== Backend stdout+stderr ==="
+          cat /tmp/backend.log || echo "No log file found"
