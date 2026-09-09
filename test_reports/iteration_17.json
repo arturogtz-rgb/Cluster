@@ -1,0 +1,34 @@
+{
+  "summary": "Bloque A backend testing (PST self-registration + affiliation). Created /app/backend/tests/test_pst_affiliation.py covering 29 test cases across PST auth (register/login/me), profile state machine, submit-for-payment blocking-requirement enforcement, document upload, public requisitos/planes, admin CRUD for requisitos/planes/discount codes, admin empresas-afiliadas approve/reject, and cross-role access control. All 29/29 tests pass on the preview URL. No backend issues found for Bloque A.",
+  "backend_issues": {
+    "critical": [],
+    "minor": []
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": []
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_pst_affiliation.py",
+    "/app/test_reports/pytest/pst_affiliation.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "routes/planes.py admin_create_codigo: uses raw dict input instead of a Pydantic model. Add CodigoDescuentoCreate schema for validation (currently silently coerces int/float/str with limited checks).",
+    "routes/pst_auth.py PUT /pst/perfil: uses `data: dict` instead of a typed Pydantic model. This bypasses input validation and makes API contract implicit; consider a PSTPerfilUpdate schema.",
+    "routes/planes.py admin_update_codigo & admin_update_empresa_estado also accept raw dict; add Pydantic models.",
+    "requisitos.py admin_update_requisito: constructs update_data from `model_dump()` (all keys incl. None) then re-adds bool keys; the initial dict-comp already filters None, so the second loop is redundant; simplify to avoid confusion.",
+    "pst_auth.py document upload: no MIME sniffing beyond extension; a malicious file could rename to .pdf. Consider validating magic bytes.",
+    "planes.py validar_codigo: fecha_expiracion comparison silently swallows ValueError/TypeError with `pass` — expired codes with malformed dates would be accepted. Should reject or log."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_pst_affiliation.py (new)"
+  ],
+  "success_rate": {"backend": "100% (29/29)", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "Admin: admin/admin123. PST accounts created dynamically per run with prefix test_pst_<timestamp>@empresa.com / password123.",
+  "seed_data_creation": "Each run creates: 1 PST cuenta + 1 empresa (TEST_Empresa_<ts>), 1 requisito (TEST_Requisito_<ts>) [deleted in same run], 1 plan (TEST_Plan_<ts>) [deleted], 1 discount code (TEST<ts>) [remains in DB, active with usos_maximos=5]. Empresa is left in state 'rechazado' at end of run.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "test_pst_affiliation.py is the regression suite for Bloque A. Run with REACT_APP_BACKEND_URL env var. The suite creates unique data per run (timestamped) so it is idempotent, but leaves behind test discount codes and rechazado test empresas. Requisito `tipo_captura` (not `tipo`) is the correct field name. The seeded catalog has requisitos with bloqueante=True — submit-for-payment blocks correctly and only succeeds after populating empresa.requisitos_completados with matching requisito_id + documento_url (when documento_requerido=True)."
+}

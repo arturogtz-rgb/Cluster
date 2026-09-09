@@ -158,3 +158,130 @@ async def run_seed():
         doc["created_at"] = doc["created_at"].isoformat()
         doc["updated_at"] = doc["updated_at"].isoformat()
         await db.articulos.insert_one(doc)
+
+
+    # Seed initial affiliation requirements
+    existing_req = await db.requisitos.count_documents({})
+    if existing_req == 0:
+        requisitos_seed = [
+            {
+                "nombre": "RFC / Situación Fiscal",
+                "descripcion": "Constancia de Situación Fiscal vigente ante el SAT",
+                "eje": "Fiscal",
+                "bloqueante": True,
+                "tipo_captura": "documento",
+                "documento_requerido": True,
+                "texto_informativo": "Sube tu Constancia de Situación Fiscal (formato PDF o imagen). Puedes obtenerla en el portal del SAT: https://www.sat.gob.mx",
+                "orden": 1,
+                "activo": True,
+            },
+            {
+                "nombre": "RNT (Registro Nacional de Turismo)",
+                "descripcion": "Registro ante la Secretaría de Turismo federal",
+                "eje": "Regulatorio",
+                "bloqueante": False,
+                "tipo_captura": "checkbox",
+                "documento_requerido": False,
+                "texto_informativo": "Si cuentas con RNT vigente, marca esta casilla y opcionalmente sube tu documento de registro.",
+                "orden": 2,
+                "activo": True,
+            },
+            {
+                "nombre": "Membresía asociativa local",
+                "descripcion": "Membresía a alguna asociación turística local",
+                "eje": "Asociativo",
+                "bloqueante": False,
+                "tipo_captura": "campo_texto",
+                "documento_requerido": False,
+                "texto_informativo": "Indica el nombre de la asociación a la que perteneces (si aplica).",
+                "orden": 3,
+                "activo": True,
+            },
+            {
+                "nombre": "Seguro y manual de seguridad",
+                "descripcion": "Cobertura de seguro para operaciones turísticas",
+                "eje": "Seguridad",
+                "bloqueante": False,
+                "tipo_captura": "selector",
+                "opciones_selector": ["Sí", "En trámite", "No"],
+                "documento_requerido": False,
+                "texto_informativo": "Si seleccionas 'No', te recomendamos contactar a la Asociación Mexicana de Turismo de Aventura (AMTAVE) o consultar con corredores de seguros especializados en turismo de aventura para obtener la cobertura adecuada.",
+                "orden": 4,
+                "activo": True,
+            },
+            {
+                "nombre": "Antigüedad de la empresa",
+                "descripcion": "Años de operación o fecha de inicio de actividades",
+                "eje": "Informativo",
+                "bloqueante": False,
+                "tipo_captura": "campo_numerico",
+                "documento_requerido": False,
+                "texto_informativo": "Indica cuántos años lleva operando tu empresa (valor aproximado).",
+                "orden": 5,
+                "activo": True,
+            },
+        ]
+        for req_data in requisitos_seed:
+            from models import Requisito
+            requisito = Requisito(**req_data)
+            doc = requisito.model_dump()
+            await db.requisitos.insert_one(doc)
+        logger.info("Seeded %d affiliation requirements", len(requisitos_seed))
+
+    # Seed initial plans
+    existing_plans = await db.planes.count_documents({})
+    if existing_plans == 0:
+        planes_seed = [
+            {
+                "nombre": "Mensual",
+                "duracion_meses": 1,
+                "precio": 0.0,
+                "moneda": "MXN",
+                "descripcion": "Plan mensual de afiliación al Clúster",
+                "beneficios": [
+                    "Perfil visible en el directorio",
+                    "Aparición en el mapa interactivo",
+                    "Recepción de leads de turistas",
+                ],
+                "activo": True,
+                "orden": 1,
+            },
+            {
+                "nombre": "Semestral",
+                "duracion_meses": 6,
+                "precio": 0.0,
+                "moneda": "MXN",
+                "descripcion": "Plan semestral con beneficios extendidos",
+                "beneficios": [
+                    "Todo del plan Mensual",
+                    "Empresa destacada en el directorio",
+                    "Prioridad en resultados de búsqueda",
+                ],
+                "activo": True,
+                "orden": 2,
+            },
+            {
+                "nombre": "Anual",
+                "duracion_meses": 12,
+                "precio": 0.0,
+                "moneda": "MXN",
+                "descripcion": "Plan anual con máximos beneficios",
+                "beneficios": [
+                    "Todo del plan Semestral",
+                    "Banner destacado en el home",
+                    "Mención en artículos del blog",
+                    "Acceso a reportes de analytics",
+                ],
+                "activo": True,
+                "orden": 3,
+            },
+        ]
+        for plan_data in planes_seed:
+            from models import Plan
+            plan = Plan(**plan_data)
+            doc = plan.model_dump()
+            await db.planes.insert_one(doc)
+        logger.info("Seeded %d subscription plans", len(planes_seed))
+
+    # Create indexes for empresa_cuentas
+    await db.empresa_cuentas.create_index("email", unique=True, sparse=True)

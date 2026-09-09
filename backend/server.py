@@ -19,6 +19,9 @@ from routes.media_settings import router as media_settings_router
 from routes.leads import router as leads_router
 from routes.usuarios import router as usuarios_router
 from routes.seo import router as seo_router
+from routes.pst_auth import router as pst_auth_router
+from routes.requisitos import router as requisitos_router
+from routes.planes import router as planes_router
 
 from seed import run_seed
 
@@ -44,6 +47,9 @@ api_router.include_router(media_settings_router)
 api_router.include_router(leads_router)
 api_router.include_router(usuarios_router)
 api_router.include_router(seo_router)
+api_router.include_router(pst_auth_router)
+api_router.include_router(requisitos_router)
+api_router.include_router(planes_router)
 
 
 @api_router.get("/")

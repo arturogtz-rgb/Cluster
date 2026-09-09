@@ -1,26 +1,37 @@
 # Cluster de Turismo de Naturaleza y Aventura Jalisco - PRD
 
 ## Problem Statement
-Sitio web full-stack para el Cluster de Turismo de Naturaleza y Aventura Jalisco. Directorio de empresas, mapa interactivo, blog/prensa, analytics y administracion completa.
+Transformar el sitio web de directorio curado a una plataforma de auto-registro y afiliación pagada para prestadores de servicios turísticos (PST). Incluye wizard de perfil, requisitos configurables, planes de suscripción (Stripe), transferencia bancaria, códigos de descuento, flujo de aprobación admin, notificaciones por correo, landing de afiliación, y mejoras al home.
 
 ## Stack
 - Backend: FastAPI + MongoDB (Motor async) + Pydantic
 - Frontend: React 19 (CRA/craco) + TailwindCSS + Shadcn/UI + Leaflet + Recharts
+- Payments: Stripe Checkout + Billing (recurring subscriptions)
+- Email: SMTP directo (servicetourmexico.com)
+- Storage: Emergent Object Storage (documents, images)
 - DevOps: Docker Compose + Nginx + Let's Encrypt (webroot)
-- Production: VPS propio del usuario
 
 ## Architecture
 ```
 /app
 ├── backend/
-│   ├── routes/ (actividades, articulos, categorias, empresas, leads, media_settings, seo, usuarios, auth_routes)
-│   ├── models.py, auth.py, database.py, seed.py, server.py, utils.py
-│   ├── tests/
+│   ├── routes/
+│   │   ├── pst_auth.py (NEW - PST registration, login, profile, documents)
+│   │   ├── requisitos.py (NEW - affiliation requirements CRUD)
+│   │   ├── planes.py (NEW - plans, discount codes, affiliated companies mgmt)
+│   │   ├── empresas.py (import/export Excel added)
+│   │   ├── auth_routes.py, actividades.py, articulos.py, categorias.py
+│   │   ├── leads.py, media_settings.py, seo.py, usuarios.py
+│   ├── models.py (expanded with EmpresaCuenta, Requisito, Plan, CodigoDescuento, Suscripcion)
+│   ├── auth.py (expanded with PST auth: create_pst_token, require_pst)
+│   ├── storage.py (NEW - Emergent Object Storage client)
+│   ├── seed.py (expanded with requisitos + plans seed)
+│   ├── server.py, database.py, utils.py
 │   ├── Dockerfile
 ├── frontend/
 │   ├── src/pages/ (Home, Mapa, Empresas, Admin*, etc.)
-│   ├── src/components/ (ActivityLocationManager, MapPicker, WhatsAppButton, etc.)
-│   ├── public/ (manifest.json, service-worker.js, robots.txt, icons)
+│   ├── src/components/
+│   ├── public/ (manifest.json, service-worker.js, robots.txt, PWA icons)
 │   ├── Dockerfile, nginx.conf
 ├── scripts/ (renew-cluster-cert.sh, backup-mongodb.sh)
 ├── .github/workflows/tests.yml
@@ -28,68 +39,73 @@ Sitio web full-stack para el Cluster de Turismo de Naturaleza y Aventura Jalisco
 ├── DEPLOY_VPS.md
 ```
 
-## Completed Features
+## DB Collections
+- `usuarios` - Admin accounts
+- `empresa_cuentas` - PST company accounts (email+password auth)
+- `empresas` - Company profiles (now with estado, cuenta_id, requisitos_completados, certificaciones)
+- `requisitos` - Configurable affiliation requirements
+- `planes` - Subscription plans
+- `codigos_descuento` - Discount codes
+- `suscripciones` - Active subscriptions
+- `documentos_pst` - Uploaded PST documents (object storage refs)
+- `actividades`, `articulos`, `categorias`, `contactos`, `media`, `analytics`, `settings`
 
-### Original Phases (Previous Forks)
-- Phase 1 UI/UX: Hero index, top companies, UUID resolution, press dates
-- Phase 2 Admin: Dynamic carousel, editable statistics, WhatsApp button, gallery overlays
-- Phase 3 Geo: Multi-location activities, interactive map, leads CSV, WA click tracking
-- Deploy fixes: Node 20, CSS animation fixes, gradient contrast
+## Completed Work
 
-### July 2026 Improvements (Current Fork)
-- **Fase 1 Security** (2026-07-10):
-  - Removed /api/seed endpoint (seed is CLI-only: `docker compose exec backend python seed.py`)
-  - Admin password from ADMIN_INITIAL_PASSWORD env var (auto-generates if missing)
-  - JWT_SECRET required (no hardcoded default, fails fast)
-  - MongoDB port (27017) removed from docker-compose.yml (internal only)
-  - Backend port (8001) removed from docker-compose.yml (internal only)
-  - CORS wildcard removed (production domains only)
-  - test_credentials.md added to .gitignore, .gitignore cleaned up
+### Previous Forks (Phases 1-3 original)
+- Full directory site with admin panel, interactive map, analytics, WhatsApp tracking
 
-- **Fase 2 SSL/Nginx** (2026-07-10):
-  - nginx.conf: ACME challenge block for webroot validation
-  - docker-compose.yml: webroot volume for certbot
-  - scripts/renew-cluster-cert.sh: deploy-hook versionado
-  - DEPLOY_VPS.md: Complete webroot SSL documentation
+### July 2026 - Security & Infrastructure (Phases 1-5)
+- Security hardening (JWT, seed, CORS, ports)
+- SSL webroot integration, PWA, Excel import/export, SEO fixes, backup scripts, CI
 
-- **Fase 3 PWA** (2026-07-10):
-  - manifest.json with brand colors and maskable icons
-  - Generated PWA icons (192x192, 512x512)
-  - Service worker with network-first + cache fallback strategy
-  - Service worker registration in index.js
+### September 2026 - Platform Transformation
 
-- **Fase 4 Import/Export Excel** (2026-07-10):
-  - GET /api/empresas/plantilla - Template .xlsx download (public)
-  - POST /api/empresas/importar - Import with validation (admin)
-  - GET /api/empresas/exportar - Export all empresas (admin)
-  - Admin UI with 3 buttons + import result panel with error table
+#### Bloque A - Fundamentos (DONE, tested 29/29)
+- EmpresaCuenta model + PST JWT auth (register/login/me)
+- Requisito model + seed (5 requirements: RFC bloqueante, RNT, membresía, seguro, antigüedad)
+- Plan model + seed (3 plans: Mensual/Semestral/Anual at $0 placeholder)
+- CodigoDescuento model + admin CRUD + public validation
+- Profile state machine: borrador → pendiente_pago → pendiente_aprobacion → aprobado/rechazado
+- Blocking requirement validation in submit-for-payment
+- Admin: manage affiliated companies, change states, approve/reject
+- Document upload via Object Storage
+- Empresa model extended with estado, cuenta_id, requisitos_completados, certificaciones
 
-- **Fase 5 Other Pending** (2026-07-10):
-  - SITE_URL default fixed to production domain
-  - robots.txt with sitemap reference
-  - backup-mongodb.sh script with 14-day rotation
-  - GitHub Actions CI workflow for pytest
+## In Progress / Next
 
-## Key API Endpoints
-- POST /api/auth/login
-- GET/POST/PUT/DELETE /api/empresas
-- GET /api/empresas/plantilla (public)
-- POST /api/empresas/importar (admin)
-- GET /api/empresas/exportar (admin)
-- GET /api/mapa/pines
-- POST /api/analytics/whatsapp-click
-- GET /api/leads/export-csv (admin)
-- GET /api/sitemap.xml
+#### Bloque B - Wizard + Panel Admin (NEXT)
+- Multi-step wizard UI (datos, categoría, ubicación, fotos, checklist, certificaciones)
+- Profile preview before payment
+- Admin /admin/requisitos panel
+- Admin /admin/configuracion extended (planes, banco, logo, GA/GTM)
+- Admin affiliated companies management UI
 
-## Backlog (P1-P3)
-- P1: Onboarding de Editores (email automatico para creacion/reseteo de contrasena)
-- P2: Rutas de Aventura (itinerarios visuales conectando pines en el mapa)
-- P3: Soporte Multi-idioma
-- P3: Conversión avanzada a PWA (offline-first, push notifications)
+#### Bloque C - Pagos
+- Stripe Checkout + Billing (recurring subscriptions)
+- Bank transfer flow (manual admin confirmation)
+- Discount codes in payment flow
+- Stripe config from admin panel
 
-## Security Notes
-- JWT_SECRET: Required env var, no default
-- Admin seed: Reads ADMIN_INITIAL_PASSWORD from env, generates random if not set
-- CORS: Production domains only (no wildcard)
-- Ports: Only frontend (80/443) exposed; DB and backend internal-only
-- SSL: Let's Encrypt webroot method with automated renewal
+#### Bloque D - Frontend Público + Emails + Bug fix
+- Landing /afiliate
+- Home: tourist intro block + category/region search
+- Fix dynamic categories in /empresas
+- Email notifications (SMTP: registration, payment, approval, rejection, expiration reminders)
+
+## Key API Endpoints (New)
+- POST /api/pst/register, /api/pst/login, GET /api/pst/me
+- PUT /api/pst/perfil, POST /api/pst/submit-for-payment
+- POST /api/pst/documents/upload
+- GET /api/requisitos (public), /api/admin/requisitos (admin CRUD)
+- GET /api/planes (public), /api/admin/planes (admin CRUD)
+- POST /api/admin/codigos-descuento, /api/codigos-descuento/validar
+- GET /api/admin/empresas-afiliadas, PUT .../estado
+
+## Security
+- JWT_SECRET required env var, PST and Admin share same secret but different token roles
+- Admin auth: username+password (usuarios collection)
+- PST auth: email+password (empresa_cuentas collection, email unique index)
+- Role-based access: require_admin, require_pst, require_any_auth
+- CORS: production domains only
+- Ports: Only frontend (80/443) exposed
