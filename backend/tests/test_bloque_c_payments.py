@@ -140,7 +140,6 @@ class TestCheckoutBankTransfer:
             assert data["banco"]["titular"] == "Cluster Turismo"
             assert "suscripcion_id" in data
             assert data["monto"] == 500.0
-            return data["suscripcion_id"]
         finally:
             requests.delete(f"{API}/admin/planes/{paid_plan_id}", headers=ah, timeout=15)
 
@@ -208,9 +207,10 @@ class TestCheckoutValidation:
 
 
 class TestPaymentStatus:
-    def test_payment_status_nonexistent_returns_404(self):
+    def test_payment_status_nonexistent_returns_401_without_auth(self):
+        """Endpoint now requires PST auth — unauthenticated returns 401/403."""
         r = requests.get(f"{API}/pst/payment-status/cs_nonexistent_123", timeout=15)
-        assert r.status_code == 404
+        assert r.status_code in (401, 403)
 
 
 class TestAdminSubscriptions:

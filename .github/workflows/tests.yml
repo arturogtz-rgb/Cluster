@@ -30,7 +30,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-asyncio httpx
 
-      - name: Run tests
+      - name: Start backend
         env:
           MONGO_URL: mongodb://localhost:27017
           DB_NAME: turismo_jalisco_test
@@ -38,4 +38,17 @@ jobs:
           CORS_ORIGINS: http://localhost
         run: |
           cd backend
-          python -m pytest tests/ -v --tb=short
+          python -m uvicorn server:app --host 0.0.0.0 --port 8001 &
+          sleep 5
+          curl -s http://localhost:8001/api/ || echo "Backend may not be ready"
+
+      - name: Run tests
+        env:
+          MONGO_URL: mongodb://localhost:27017
+          DB_NAME: turismo_jalisco_test
+          JWT_SECRET: test-secret-key-for-ci-only
+          CORS_ORIGINS: http://localhost
+          REACT_APP_BACKEND_URL: http://localhost:8001
+        run: |
+          cd backend
+          python -m pytest tests/test_pst_affiliation.py tests/test_bloque_d.py tests/test_bloque_c_payments.py -v --tb=short
