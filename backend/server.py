@@ -261,6 +261,16 @@ async def startup_event():
         init_storage()
     except Exception as e:
         logger.warning(f"Object storage init failed (uploads may not work): {e}")
+    # Start daily expiration reminder scheduler
+    try:
+        from apscheduler.schedulers.asyncio import AsyncIOScheduler
+        from scheduler import check_expiration_reminders
+        sched = AsyncIOScheduler()
+        sched.add_job(check_expiration_reminders, "cron", hour=8, minute=0, id="expiration_reminders")
+        sched.start()
+        logger.info("Expiration reminder scheduler started (daily at 08:00 UTC)")
+    except Exception as e:
+        logger.warning(f"Scheduler init failed: {e}")
 
 
 @app.on_event("shutdown")
