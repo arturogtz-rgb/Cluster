@@ -16,6 +16,8 @@ import {
   Mail,
   Users,
   FileText,
+  ClipboardCheck,
+  UserCheck,
 } from "lucide-react";
 import CommandSearch from "./CommandSearch";
 
@@ -24,10 +26,12 @@ const CLUSTER_LOGO =
 
 const allNavItems = [
   { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "editor"] },
+  { path: "/admin/afiliados", label: "Afiliados", icon: UserCheck, roles: ["admin"] },
   { path: "/admin/empresas", label: "Empresas", icon: Building2, roles: ["admin"] },
   { path: "/admin/articulos", label: "Artículos", icon: Newspaper, roles: ["admin", "editor"] },
   { path: "/admin/actividades", label: "Actividades", icon: TreePine, roles: ["admin", "editor"] },
   { path: "/admin/categorias", label: "Categorías", icon: Tag, roles: ["admin"] },
+  { path: "/admin/requisitos", label: "Requisitos", icon: ClipboardCheck, roles: ["admin"] },
   { path: "/admin/media", label: "Media", icon: FolderOpen, roles: ["admin"] },
   { path: "/admin/leads", label: "Mensajes", icon: Mail, roles: ["admin"] },
   { path: "/admin/nosotros-editor", label: "Nosotros", icon: FileText, roles: ["admin"] },

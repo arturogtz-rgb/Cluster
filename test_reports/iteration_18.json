@@ -1,0 +1,34 @@
+{
+  "summary": "Frontend testing for Bloque B (PST self-registration + admin panels). All critical flows working: PST register/login/wizard/dashboard, admin Requisitos, admin Afiliados with filter, and all 6 Settings tabs (Hero, WhatsApp, Planes, Codigos, Banco, Analytics). Wizard completed end-to-end for a newly-registered PST user through all 6 steps (datos -> ubicacion -> fotos -> requisitos -> certificaciones -> preview). 5 requisitos rendered in wizard with 2 obligatorio badges. 3 seeded planes and 2 discount codes visible in Settings tabs. Admin sidebar shows Afiliados + Requisitos items (verified visually).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "PUT /api/pst/perfil", "issue": "Returns 400 when the PST account has an already-approved empresa (test@empresa.com). Wizard save fails silently. Likely intended (approved profiles are locked), but the UI should show a clear message instead of a generic 400 toast, or hide Editar perfil for aprobado state (currently only shown for borrador/rechazado which is correct - but if user hits /pst/wizard directly it errors)."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "PSTWizard categoria select", "issues": ["Console hydration warnings: <span> cannot be a child of <select>/<option>. Caused by a wrapper span with x-ve-dynamic around <option> nodes from the dev instrumentation. Not a user-facing bug but pollutes console."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "Consider hiding /pst/wizard access (or showing an informative message) when empresa.estado === 'aprobado', so users don't hit generic 400 errors from PUT /api/pst/perfil.",
+    "Investigate the <span> inside <select>/<option> hydration warnings in PSTWizard (line 206-209) — likely from a dev-instrumentation wrapper; ensure production build strips it."
+  ],
+  "critical_code_review_comments": [
+    "PSTWizard.jsx (480 lines) is close to the 700-line cap but acceptable; consider splitting each step into its own component if it grows.",
+    "AdminSettings.jsx (367 lines) is fine; tabs are inline which is OK for now.",
+    "AdminLayout uses localStorage.getItem('auth_token') synchronously in useEffect – during first render navItems may show admin items by default (userRole initial state = 'admin'), which is a minor security perception issue but fine because backend enforces authorization."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (not tested in this iteration)", "frontend": "100%"},
+  "test_credentials": "Admin: admin/admin123; PST: test@empresa.com/password123; also created wizardtest*@test.com and testreg*@test.com via /registro",
+  "seed_data_creation": "Registered 2 temporary PST accounts via /registro to verify flow. wizardtest1788926727@test.com completed wizard through preview step.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Bloque B frontend is fully functional. When testing wizard save, avoid using test@empresa.com (approved empresa → PUT /pst/perfil returns 400). Register a new account via /registro to test wizard save/advance flow. All data-testid attributes are in place: wizard-step-{id}, wizard-{field}, wizard-next/prev/submit, admin-requisitos-page, admin-afiliados-page, tab-{hero|whatsapp|planes|codigos|banco|analytics}, nav-afiliados, nav-requisitos.",
+  "rca of the issue": "N/A - all tested features passed."
+}

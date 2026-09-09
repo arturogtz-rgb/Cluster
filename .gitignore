@@ -36,6 +36,10 @@ dist/
 # Sensitive files
 memory/test_credentials.md
 
+# Test upload artifacts
+backend/uploads/empresas/test*/
+backend/uploads/test*/
+
 # Logs and debug files
 npm-debug.log*
 yarn-debug.log*
@@ -86,3 +90,4 @@ frontend/node_modules/.cache/default-development/10.pack
 credentials.json
 *.key
 .credentials
+frontend/node_modules/.cache/default-development/4.pack

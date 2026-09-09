@@ -9,13 +9,14 @@
 ## PST Test Account
 - **Email:** test@empresa.com
 - **Password:** password123
+- **Login URL:** /pst/login
 - **Login endpoint:** POST /api/pst/login with {"email":"test@empresa.com","password":"password123"}
 - **Empresa:** Aventuras Test (estado: aprobado)
+- **Note:** This account has an approved empresa, so wizard will redirect to dashboard.
 
-## API Authentication
-- Admin: POST /api/auth/login → token in response → Authorization: Bearer <token>
-- PST: POST /api/pst/login → token in response → Authorization: Bearer <token>
-- Admin token has role: "admin", PST token has role: "pst"
+## Registration
+- **URL:** /registro
+- **Creates:** New PST account, then redirects to /pst/wizard
 
 ## Discount Code (test)
 - Code: GRATIS2026 (100% discount, 10 uses max)

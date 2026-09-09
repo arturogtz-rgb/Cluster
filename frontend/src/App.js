@@ -29,6 +29,14 @@ const AdminSettings = lazy(() => import("./pages/admin/AdminSettings"));
 const AdminNosotros = lazy(() => import("./pages/admin/AdminNosotros"));
 const AdminLeads = lazy(() => import("./pages/admin/AdminLeads"));
 const AdminUsuarios = lazy(() => import("./pages/admin/AdminUsuarios"));
+const AdminRequisitos = lazy(() => import("./pages/admin/AdminRequisitos"));
+const AdminAfiliados = lazy(() => import("./pages/admin/AdminAfiliados"));
+
+// PST Pages (lazy loaded)
+const PSTLogin = lazy(() => import("./pages/pst/PSTLogin"));
+const PSTRegister = lazy(() => import("./pages/pst/PSTRegister"));
+const PSTWizard = lazy(() => import("./pages/pst/PSTWizard"));
+const PSTDashboard = lazy(() => import("./pages/pst/PSTDashboard"));
 
 // Components
 import FloatingNav from "./components/FloatingNav";
@@ -263,6 +271,28 @@ function App() {
               </AdminLayout>
             }
           />
+          <Route
+            path="/admin/requisitos"
+            element={
+              <AdminLayout>
+                <AdminRequisitos />
+              </AdminLayout>
+            }
+          />
+          <Route
+            path="/admin/afiliados"
+            element={
+              <AdminLayout>
+                <AdminAfiliados />
+              </AdminLayout>
+            }
+          />
+
+          {/* PST Routes */}
+          <Route path="/pst/login" element={<PSTLogin />} />
+          <Route path="/registro" element={<PSTRegister />} />
+          <Route path="/pst/wizard" element={<PSTWizard />} />
+          <Route path="/pst/dashboard" element={<PSTDashboard />} />
         </Routes>
         <Toaster position="top-right" />
         </Suspense>
