@@ -248,6 +248,11 @@ async def startup_event():
         logger.info("Auto-seed completed successfully")
     except Exception as e:
         logger.error(f"Auto-seed failed: {e}")
+    try:
+        from storage import init_storage
+        init_storage()
+    except Exception as e:
+        logger.warning(f"Object storage init failed (uploads may not work): {e}")
 
 
 @app.on_event("shutdown")

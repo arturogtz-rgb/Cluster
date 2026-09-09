@@ -1,46 +1,22 @@
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Form
+from fastapi.responses import Response
 from typing import List, Optional
 from datetime import datetime
 from pathlib import Path
 import uuid
-import aiofiles
 from slugify import slugify
 
 from database import db
 from auth import get_current_user
 from models import MediaFile, SiteSettings, SiteSettingsUpdate
 from utils import optimize_image, IMAGE_SIZES
-
-ROOT_DIR = Path(__file__).parent.parent
-UPLOAD_DIR = ROOT_DIR / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
-
-MEDIA_FOLDERS = {
-    "system": UPLOAD_DIR / "system",
-    "empresas": UPLOAD_DIR / "empresas",
-    "articulos": UPLOAD_DIR / "articulos",
-    "actividades": UPLOAD_DIR / "actividades",
-    "categorias": UPLOAD_DIR / "categorias",
-}
-for folder in MEDIA_FOLDERS.values():
-    folder.mkdir(exist_ok=True)
+from storage import put_object, get_object, init_storage
 
 ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".svg"}
 MAX_FILE_SIZE = 10 * 1024 * 1024
+APP_NAME = "cluster-turismo-jalisco"
 
 router = APIRouter()
-
-
-def get_upload_folder(category: str, entity_slug: str = None, subfolder: str = None) -> Path:
-    base = MEDIA_FOLDERS.get(category, UPLOAD_DIR / "system")
-    if entity_slug:
-        folder = base / entity_slug
-        if subfolder:
-            folder = folder / subfolder
-    else:
-        folder = base
-    folder.mkdir(parents=True, exist_ok=True)
-    return folder
 
 
 @router.get("/media", response_model=List[MediaFile])
@@ -92,23 +68,31 @@ async def upload_file(
     safe_name = slugify(Path(file.filename).stem, lowercase=True)
     new_filename = f"{safe_name}_{unique_id}{file_ext}"
 
-    upload_folder = get_upload_folder(category, entity_slug or None, subfolder or None)
-    file_path = upload_folder / new_filename
-    relative_path = file_path.relative_to(UPLOAD_DIR)
-    url = f"/api/uploads/{relative_path.as_posix()}"
+    # Build storage path
+    path_parts = [APP_NAME, "uploads", category]
+    if entity_slug:
+        path_parts.append(entity_slug)
+    if subfolder:
+        path_parts.append(subfolder)
+    path_parts.append(new_filename)
+    storage_path = "/".join(path_parts)
+
+    content_type = "image/webp" if file_ext == ".webp" else (file.content_type or "application/octet-stream")
 
     try:
-        async with aiofiles.open(file_path, "wb") as f:
-            await f.write(content)
+        result = put_object(storage_path, content, content_type)
+        stored_path = result.get("path", storage_path)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error al guardar archivo: {str(e)}")
+
+    url = f"/api/files/{stored_path}"
 
     media_file = MediaFile(
         filename=new_filename,
         original_name=file.filename,
         url=url,
         size=len(content),
-        mime_type="image/webp" if file_ext == ".webp" else (file.content_type or "application/octet-stream"),
+        mime_type=content_type,
     )
 
     doc = media_file.model_dump()
@@ -116,9 +100,11 @@ async def upload_file(
     doc["category"] = category
     doc["entity_slug"] = entity_slug
     doc["subfolder"] = subfolder
+    doc["storage_path"] = stored_path
     doc["original_size"] = original_size
     doc["optimized_size"] = len(content)
     doc["compression_ratio"] = round((1 - len(content) / original_size) * 100, 1) if original_size > 0 else 0
+    doc["is_deleted"] = False
     await db.media.insert_one(doc)
 
     return {
@@ -132,16 +118,25 @@ async def upload_file(
     }
 
 
+@router.get("/files/{path:path}")
+async def serve_file(path: str):
+    """Serve a file from object storage."""
+    record = await db.media.find_one({"storage_path": path, "is_deleted": {"$ne": True}})
+    if not record:
+        record = await db.media.find_one({"storage_path": path})
+    try:
+        data, content_type = get_object(path)
+        return Response(content=data, media_type=record.get("mime_type", content_type) if record else content_type)
+    except Exception:
+        raise HTTPException(status_code=404, detail="Archivo no encontrado")
+
+
 @router.delete("/media/{file_id}")
 async def delete_media(file_id: str, user=Depends(get_current_user)):
     media = await db.media.find_one({"id": file_id}, {"_id": 0})
     if not media:
         raise HTTPException(status_code=404, detail="Archivo no encontrado")
-    url_path = media.get("url", "").replace("/api/uploads/", "")
-    file_path = UPLOAD_DIR / url_path
-    if file_path.exists():
-        file_path.unlink()
-    await db.media.delete_one({"id": file_id})
+    await db.media.update_one({"id": file_id}, {"$set": {"is_deleted": True}})
     return {"message": "Archivo eliminado"}
 
 

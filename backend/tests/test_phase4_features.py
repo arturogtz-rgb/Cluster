@@ -468,7 +468,7 @@ def cleanup_test_users(admin_token):
             for user in users:
                 if user["username"].startswith("test_"):
                     requests.delete(f"{BASE_URL}/api/usuarios/{user['id']}", headers=headers)
-    except:
+    except Exception:
         pass
 
 
