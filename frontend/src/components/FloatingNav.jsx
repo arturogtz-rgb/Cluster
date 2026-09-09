@@ -41,6 +41,7 @@ const FloatingNav = () => {
     { href: "/mapa", label: "Mapa" },
     { href: "/prensa", label: "Prensa" },
     { href: "/nosotros", label: "Nosotros" },
+    { href: "/afiliate", label: "Afíliate" },
   ];
 
   const isActive = (href) => {

@@ -1,37 +1,69 @@
-import { Mountain, Waves, Home, GraduationCap, TreePine } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Mountain, ChevronDown } from "lucide-react";
+import axios from "axios";
 
-const CATEGORIES = [
-  { id: "all", label: "Todas", icon: Mountain },
-  { id: "Capacitación", label: "Capacitación", icon: GraduationCap },
-  { id: "Operadora de aventura", label: "Operadora de aventura", icon: TreePine },
-  { id: "Parque acuático", label: "Parque acuático", icon: Waves },
-  { id: "Hospedaje", label: "Hospedaje", icon: Home },
-  { id: "Parque de aventura", label: "Parque de aventura", icon: Mountain },
-];
+const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
 
 const CategoryFilter = ({ selected, onChange }) => {
+  const [categorias, setCategorias] = useState([]);
+  const [showAll, setShowAll] = useState(false);
+
+  useEffect(() => {
+    axios.get(`${API}/categorias`).then(res => {
+      const cats = res.data?.categorias;
+      if (Array.isArray(cats)) setCategorias(cats.filter(c => c.activa !== false));
+    }).catch(() => {});
+  }, []);
+
+  // Responsive limits
+  const getVisibleCount = () => {
+    if (typeof window === "undefined") return 6;
+    if (window.innerWidth >= 1024) return 10;
+    if (window.innerWidth >= 768) return 8;
+    return 6;
+  };
+
+  const [visibleCount, setVisibleCount] = useState(getVisibleCount);
+
+  useEffect(() => {
+    const onResize = () => setVisibleCount(getVisibleCount());
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const allCats = [{ nombre: "Todas", slug: "all" }, ...categorias];
+  const visible = showAll ? allCats : allCats.slice(0, visibleCount + 1);
+  const hasMore = allCats.length > visibleCount + 1;
+
   return (
-    <div className="flex flex-wrap gap-3 justify-center" data-testid="category-filter">
-      {CATEGORIES.map((cat) => {
-        const Icon = cat.icon;
-        const isActive = selected === cat.id || (cat.id === "all" && !selected);
-        
+    <div className="flex flex-wrap gap-2 justify-center" data-testid="category-filter">
+      {visible.map((cat) => {
+        const isAll = cat.slug === "all";
+        const isActive = isAll ? !selected : selected === cat.nombre;
         return (
           <button
-            key={cat.id}
-            onClick={() => onChange(cat.id === "all" ? null : cat.id)}
-            data-testid={`filter-${cat.id}`}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-sm font-medium transition-all duration-300 ${
+            key={cat.slug || cat.nombre}
+            onClick={() => onChange(isAll ? null : cat.nombre)}
+            data-testid={`filter-${cat.slug || cat.nombre}`}
+            className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
               isActive
-                ? "bg-forest text-white shadow-lg scale-105"
+                ? "bg-forest text-white shadow-lg"
                 : "bg-white text-stone-600 hover:bg-stone-50 hover:text-forest shadow-sm"
             }`}
           >
-            <Icon className="w-4 h-4" />
-            <span className="hidden sm:inline">{cat.label}</span>
+            {cat.nombre}
           </button>
         );
       })}
+      {hasMore && !showAll && (
+        <button
+          onClick={() => setShowAll(true)}
+          data-testid="filter-show-more"
+          className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-medium bg-stone-100 text-stone-500 hover:bg-stone-200 transition-colors"
+        >
+          Ver más <ChevronDown className="w-3.5 h-3.5" />
+        </button>
+      )}
     </div>
   );
 };

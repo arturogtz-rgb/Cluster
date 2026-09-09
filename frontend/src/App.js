@@ -13,6 +13,7 @@ const Prensa = lazy(() => import("./pages/Prensa"));
 const ArticuloDetalle = lazy(() => import("./pages/ArticuloDetalle"));
 const Mapa = lazy(() => import("./pages/Mapa"));
 const Nosotros = lazy(() => import("./pages/Nosotros"));
+const Afiliate = lazy(() => import("./pages/Afiliate"));
 
 // Admin Pages (all lazy loaded)
 const AdminLogin = lazy(() => import("./pages/admin/AdminLogin"));
@@ -138,6 +139,12 @@ function App() {
                 <Nosotros />
                 <WhatsAppButton />
               </>
+            }
+          />
+          <Route
+            path="/afiliate"
+            element={
+              <Afiliate />
             }
           />
 

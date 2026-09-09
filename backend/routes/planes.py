@@ -187,6 +187,20 @@ async def admin_update_empresa_estado(empresa_id: str, data: dict, user=Depends(
         update["activa"] = False
 
     await db.empresas.update_one({"id": empresa_id}, {"$set": update})
+
+    # Send email notifications for state changes
+    try:
+        from notifications import send_profile_approved_email, send_profile_rejected_email
+        if empresa.get("cuenta_id"):
+            cuenta = await db.empresa_cuentas.find_one({"id": empresa["cuenta_id"]}, {"_id": 0})
+            if cuenta:
+                if nuevo_estado == "aprobado":
+                    send_profile_approved_email(cuenta["email"], cuenta.get("nombre_contacto", ""), empresa.get("nombre", ""))
+                elif nuevo_estado == "rechazado":
+                    send_profile_rejected_email(cuenta["email"], cuenta.get("nombre_contacto", ""), empresa.get("nombre", ""), data.get("motivo", ""))
+    except Exception:
+        pass
+
     return {"status": "ok", "estado": nuevo_estado}
 
 

@@ -1,0 +1,22 @@
+{
+  "summary": "Bloque D verified end-to-end (Landing /afiliate, Home intro + dynamic categories, /empresas CategoryFilter dynamic, FloatingNav Afiliate link, notifications module, payment-status auth+ownership, Stripe key no fallback). Backend: 11/11 pytest tests passing (test_bloque_d.py). Frontend: /afiliate loads with hero (CTA -> /registro), Beneficios section, 5 requisitos rendered from API, 3 planes rendered, testimonials placeholder, final CTA. Home shows new intro section with heading 'Tu portal al turismo de aventura en Jalisco', dropdown populated dynamically from /api/categorias (5 categories confirmed), Explorar mapa button links to /mapa. /empresas CategoryFilter shows Todas + 5 dynamic categories from /api/categorias (no hardcoded array). FloatingNav has 'Afíliate' link on all public pages. Backend logs confirm registration and rejection emails invoke send_registration_email / send_profile_rejected_email and gracefully warn 'SMTP not configured' as expected in preview env. Verified /pst/payment-status now requires Bearer auth (401 without token) and enforces cuenta_id ownership (403 when session belongs to another user, 200 for owner). Verified payments.py has no 'sk_test_emergent' fallback.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": ["/app/backend/tests/test_bloque_d.py", "/app/test_reports/pytest/bloque_d.xml"],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "payments.py line 231 uses stripe.error.StripeError which may not exist on stripe SDK >=8.0 (already flagged in prev iteration - still not fixed). Consider except stripe.StripeError or a bare except with logging.",
+    "notifications.py _send_email uses a synchronous smtplib inside a request handler. Under real SMTP this will block the FastAPI event loop for up to 10s (timeout=10). Recommend running via BackgroundTasks or asyncio.to_thread(_send_email, ...).",
+    "Afiliate.jsx uses window.location.href pattern via Link (good). Home.jsx home-search uses window.location.href = ... instead of react-router navigate() - forces a full page reload. Prefer useNavigate for SPA consistency.",
+    "CategoryFilter.jsx: 'Ver más' does not have a corresponding 'Ver menos' toggle once expanded. Minor UX gap.",
+    "notifications.py: SITE_NAME contains non-ASCII 'Clúster' - fine for HTML but ensure email subject headers are properly encoded (MIMEText handles utf-8, but msg['Subject'] should be an email.header.Header for full compliance)."
+  ],
+  "updated_files": ["/app/backend/tests/test_bloque_d.py"],
+  "success_rate": {"backend": "100% (11/11)", "frontend": "100%"},
+  "test_credentials": "Admin admin/admin123. PST accounts created dynamically with TEST_bloqued_ prefix.",
+  "seed_data_creation": "Test creates two temp PST accounts (TEST_bloqued_a_* / TEST_bloqued_b_*) and one payment_transactions row, cleaned up via pymongo sync client.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Bloque D complete. test_bloque_d.py covers: /planes returning 3+, /requisitos returning 5, /categorias dynamic, notifications module import & graceful SMTP fail, payments.py has no sk_test_emergent fallback, /pst/payment-status requires auth & enforces ownership (403 cross-user), pst_register succeeds, admin estado PUT triggers rejection email. Frontend playwright verified /afiliate, home intro block, /empresas CategoryFilter. NOTE: cleanup of payment_transactions uses sync pymongo (see fix in test_payment_status_ownership_403) to avoid motor event-loop conflicts - re-use this pattern when needed. Backend logs at /var/log/supervisor/backend.err.log show 'SMTP not configured' warnings confirming email code paths execute.",
+  "rca of the issue": "N/A - all features working as specified."
+}

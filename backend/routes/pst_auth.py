@@ -34,6 +34,14 @@ async def pst_register(data: PSTRegisterRequest):
 
     token = create_pst_token(cuenta.id, email)
 
+    # Send registration email (async-safe, non-blocking)
+    try:
+        from notifications import send_registration_email, send_admin_notification
+        send_registration_email(email, data.nombre_contacto.strip())
+        send_admin_notification("Nueva empresa registrada", f"{data.nombre_contacto} ({email}) se registró como prestador de servicios.")
+    except Exception:
+        pass
+
     return {
         "token": token,
         "cuenta": {

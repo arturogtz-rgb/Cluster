@@ -309,6 +309,35 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Intro Block - For tourists */}
+      <section className="py-16 md:py-20 bg-limestone px-6" data-testid="intro-section">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="font-outfit font-bold text-2xl md:text-3xl text-stone-900 mb-4">
+            Tu portal al turismo de aventura en Jalisco
+          </h2>
+          <p className="text-stone-600 text-base max-w-2xl mx-auto mb-8 leading-relaxed">
+            Aquí encontrarás operadoras de aventura, hospedajes y experiencias únicas en la naturaleza de Jalisco, todas verificadas y afiliadas al Clúster de Turismo de Naturaleza y Aventura. Explora con confianza.
+          </p>
+          {/* Quick Search */}
+          <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto" data-testid="home-search">
+            <select
+              onChange={(e) => {
+                if (e.target.value) window.location.href = `/empresas?categoria=${encodeURIComponent(e.target.value)}`;
+              }}
+              className="flex-1 px-5 py-3 rounded-full border border-stone-200 bg-white focus:outline-none focus:border-forest text-sm text-stone-700"
+              data-testid="home-search-category"
+            >
+              <option value="">Buscar por categoría...</option>
+              {categorias.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+            </select>
+            <Link to="/mapa" data-testid="home-search-map-btn"
+              className="bg-forest text-white px-6 py-3 rounded-full text-sm font-semibold flex items-center justify-center gap-2 hover:bg-forest-dark transition-colors shadow-md">
+              <MapPin className="w-4 h-4" /> Explorar mapa
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Categories Section */}
       <section className="py-16 md:py-24 px-6 md:px-12" data-testid="categories-section">
         <div className="max-w-7xl mx-auto">

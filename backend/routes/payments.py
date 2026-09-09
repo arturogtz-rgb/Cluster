@@ -12,7 +12,9 @@ from auth import require_pst
 
 logger = logging.getLogger(__name__)
 
-stripe.api_key = os.environ.get("STRIPE_SECRET_KEY") or "sk_test_emergent"
+stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
+if not stripe.api_key:
+    logger.warning("STRIPE_SECRET_KEY not set — Stripe payments will not work")
 STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
 router = APIRouter()
@@ -203,10 +205,12 @@ async def create_checkout(req: PaymentRequest, user=Depends(require_pst)):
 
 
 @router.get("/pst/payment-status/{session_id}")
-async def get_payment_status(session_id: str):
+async def get_payment_status(session_id: str, user=Depends(require_pst)):
     record = await db.payment_transactions.find_one({"session_id": session_id})
     if not record:
         raise HTTPException(status_code=404, detail="Transacción no encontrada")
+    if record.get("cuenta_id") != user.get("user_id"):
+        raise HTTPException(status_code=403, detail="No tienes acceso a esta transacción")
 
     if record.get("payment_status") != "paid":
         try:
