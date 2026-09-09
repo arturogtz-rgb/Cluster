@@ -1,0 +1,28 @@
+{
+  "summary": "CI-fix verification complete. Verified the .github/workflows/tests.yml has all required top-level env vars (ADMIN_INITIAL_PASSWORD=admin123, REACT_APP_BACKEND_URL=http://localhost:8001, MONGO_URL, DB_NAME, JWT_SECRET, CORS_ORIGINS), starts backend with uvicorn before running tests, and runs exactly the three target test files. emergentintegrations is NOT in backend/requirements.txt. Simulated CI accurately by starting a fresh isolated backend on port 8098 (env -i, no .env, no Stripe, no EMERGENT_LLM_KEY, fresh DB=turismo_ci_verify, ADMIN_INITIAL_PASSWORD=admin123) and running the 3 test files against it. Result: 49/49 tests passed.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/test_reports/pytest/iter22_ci_sim.xml",
+    "/app/backend/tests/test_pst_affiliation.py",
+    "/app/backend/tests/test_bloque_d.py",
+    "/app/backend/tests/test_bloque_c_payments.py",
+    "/app/.github/workflows/tests.yml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "CI workflow env vars (MONGO_URL, DB_NAME, JWT_SECRET, CORS_ORIGINS, ADMIN_INITIAL_PASSWORD, REACT_APP_BACKEND_URL) are correctly top-level so they propagate to both the 'Start backend' and 'Run tests' steps. This is essential because test_bloque_d.py's ownership test inserts directly into MongoDB via `from database import db` and must use the same DB_NAME as the backend process.",
+    "seed.py correctly reads ADMIN_INITIAL_PASSWORD env var; if unset, it generates a random one (would break tests). CI now sets admin123 explicitly.",
+    "requirements.txt confirmed clean of emergentintegrations (grep NOT FOUND).",
+    "Backend starts gracefully without Stripe keys and without EMERGENT_LLM_KEY: object storage init succeeds, scheduler starts, auto-seed inserts 5 requisitos + 3 planes + admin user.",
+    "Workflow runs exactly: tests/test_pst_affiliation.py tests/test_bloque_d.py tests/test_bloque_c_payments.py (matches requirement)."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "100% (49/49)", "frontend": "N/A"},
+  "test_credentials": "admin / admin123 (when ADMIN_INITIAL_PASSWORD=admin123)",
+  "seed_data_creation": "Auto-seed on backend startup created: admin user, 10 actividades, 2 empresas (ecomuk, aventurate), 1 articulo, 5 requisitos, 3 planes. Ephemeral DB turismo_ci_verify was used and left in place (harmless, isolated from prod DB).",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "CI fix fully verified. Simulation command that reproduces GitHub Actions locally: (1) start fresh backend `cd /app/backend && env -i PATH=/root/.venv/bin:/usr/bin:/bin MONGO_URL=mongodb://localhost:27017 DB_NAME=turismo_ci_verify JWT_SECRET=test-secret-key-for-ci-only CORS_ORIGINS=http://localhost ADMIN_INITIAL_PASSWORD=admin123 /root/.venv/bin/python -m uvicorn server:app --host 0.0.0.0 --port 8098 &`  (2) run `REACT_APP_BACKEND_URL=http://localhost:8098 MONGO_URL=mongodb://localhost:27017 DB_NAME=turismo_ci_verify python -m pytest tests/test_pst_affiliation.py tests/test_bloque_d.py tests/test_bloque_c_payments.py`. All 49 pass.",
+  "rca of the issue": "Original bug: seed.py generated a random admin password when ADMIN_INITIAL_PASSWORD was unset, so CI tests using admin/admin123 got 401. Fix (already applied by main agent): added ADMIN_INITIAL_PASSWORD=admin123 as a top-level env var in tests.yml so both the backend and pytest steps see it. Also removed the private emergentintegrations dep from requirements.txt. Verified via clean-room simulation."
+}
