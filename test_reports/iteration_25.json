@@ -1,0 +1,52 @@
+{
+  "summary": "Iteration 25: Verified Stripe config is now loaded from db.settings per-request (not module-level os.environ). Created test_stripe_config_from_db.py with 6 focused tests — ALL PASS. Full backend suite: 215/216 passed. The single failure (test_sitemap_contains_static_pages) is unrelated to this fix (sitemap uses production canonical URL from settings, not preview URL) and pre-exists this iteration.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/sitemap.xml", "issue": "test_sitemap_contains_static_pages fails because sitemap emits site_url='https://clusterturismojalisco.com.mx' from settings, but test asserts REACT_APP_BACKEND_URL preview host. Test expectation issue, not a Stripe-fix regression."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_stripe_config_from_db.py",
+    "/app/backend/tests/test_bloque_d.py",
+    "/app/test_reports/pytest/iter25_stripe_cfg.xml",
+    "/app/test_reports/pytest/iter25_bloque_d.xml",
+    "/app/test_reports/pytest/iter25_all.xml"
+  ],
+  "verification_details": {
+    "payments_source_checks": [
+      "PASS: payments.py contains '_get_stripe_config' and reads 'db.settings' with id 'site_settings'",
+      "PASS: No module-level 'stripe.api_key = os.environ.get(...)' assignment (regex checked)",
+      "PASS: stripe_webhook function calls _get_stripe_config to obtain webhook_secret (not a stale constant)",
+      "PASS: _ENV_STRIPE_SECRET / _ENV_STRIPE_WEBHOOK are captured at import as fallback only"
+    ],
+    "settings_persistence": [
+      "PASS: PUT /api/settings with stripe_secret_key + stripe_webhook_secret persists and GET returns the same values (roundtrip with cleanup/restore)"
+    ],
+    "checkout_flow": [
+      "PASS: POST /api/pst/checkout requires auth (401/403 without token)",
+      "PASS: POST /api/pst/checkout with authed user but no empresa returns 400 (endpoint executes; _get_stripe_config runs before empresa check)",
+      "PASS: POST /api/stripe/webhook returns 400/500 when webhook_secret cleared in db.settings — proving webhook_secret is read dynamically, not from module load"
+    ],
+    "full_suite": "215/216 backend tests PASS (1 unrelated sitemap URL-host assertion)",
+    "bloque_d_49_test_reference": "The problem statement mentions '49 tests locally' — our /app/backend/tests/test_bloque_d.py has 11 test cases and all pass. The updated TestStripeKeyNoFallback::test_payments_module_no_fallback now checks for '_get_stripe_config' and 'db.settings' as required and passes."
+  },
+  "action_items": [
+    "OPTIONAL: fix test_seo_features.py::test_sitemap_contains_static_pages to accept the configured site_url from settings instead of hardcoding REACT_APP_BACKEND_URL. Not caused by this iteration; can be deferred."
+  ],
+  "critical_code_review_comments": [
+    "payments.py _get_stripe_config sets the process-global 'stripe.api_key = secret_key' on every call. If two concurrent requests use different keys (e.g., during rotation), there is a small race window. Acceptable for current single-tenant setup; consider using per-call stripe.StripeClient(api_key=...) if multi-tenant support is added.",
+    "payment-status endpoint (line 223) awaits _get_stripe_config() but discards the tuple; fine, side-effect is setting stripe.api_key. A short comment there would help future readers.",
+    "stripe.error import path (stripe.error.SignatureVerificationError, stripe.error.StripeError) works but is legacy in newer stripe-python versions (>=8). Verify stripe library version pinned in requirements matches this API."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_stripe_config_from_db.py (new)"
+  ],
+  "success_rate": {"backend": "99.5% (215/216)", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "admin/admin123 (from /app/memory/test_credentials.md)",
+  "seed_data_creation": "Created ephemeral PST test users (TEST_stripecfg_*, TEST_bloqued_*) — tests restore original stripe_secret_key / stripe_webhook_secret in db.settings via try/finally.",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Iter 25: verified stripe key/webhook now loaded per-request from db.settings. New test file: /app/backend/tests/test_stripe_config_from_db.py (6 tests). Existing test_bloque_d.py::TestStripeKeyNoFallback correctly asserts '_get_stripe_config' and 'db.settings' present. Pre-existing unrelated failure: test_seo_features::test_sitemap_contains_static_pages compares host to preview URL but sitemap uses configured site_url (production domain). Did not attempt CI-sim subshell on port 8096 (env -i) — the runtime evidence via preview backend + source-code assertions collectively prove the contract."
+}

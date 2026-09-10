@@ -12,12 +12,21 @@ from auth import require_pst
 
 logger = logging.getLogger(__name__)
 
-stripe.api_key = os.environ.get("STRIPE_SECRET_KEY")
-if not stripe.api_key:
-    logger.warning("STRIPE_SECRET_KEY not set — Stripe payments will not work")
-STRIPE_WEBHOOK_SECRET = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
+# Env vars as fallback only — primary source is db.settings (configured via /admin/configuracion)
+_ENV_STRIPE_SECRET = os.environ.get("STRIPE_SECRET_KEY", "")
+_ENV_STRIPE_WEBHOOK = os.environ.get("STRIPE_WEBHOOK_SECRET", "")
 
 router = APIRouter()
+
+
+async def _get_stripe_config():
+    """Read Stripe keys from db.settings (admin-configured), falling back to env vars."""
+    settings = await db.settings.find_one({"id": "site_settings"}, {"_id": 0}) or {}
+    secret_key = settings.get("stripe_secret_key") or _ENV_STRIPE_SECRET
+    webhook_secret = settings.get("stripe_webhook_secret") or _ENV_STRIPE_WEBHOOK
+    if secret_key:
+        stripe.api_key = secret_key
+    return secret_key, webhook_secret
 
 PLAN_LOOKUP_KEYS = {
     1: "plan_mensual",
@@ -36,6 +45,8 @@ class PaymentRequest(BaseModel):
 @router.post("/pst/checkout")
 async def create_checkout(req: PaymentRequest, user=Depends(require_pst)):
     """Create a Stripe checkout session or handle free/transfer payments."""
+    stripe_key, _ = await _get_stripe_config()
+
     cuenta = await db.empresa_cuentas.find_one({"id": user["user_id"]}, {"_id": 0})
     if not cuenta or not cuenta.get("empresa_id"):
         raise HTTPException(status_code=400, detail="Completa tu perfil primero")
@@ -136,6 +147,9 @@ async def create_checkout(req: PaymentRequest, user=Depends(require_pst)):
         }
 
     # Stripe checkout
+    if not stripe_key:
+        raise HTTPException(status_code=500, detail="Stripe no está configurado. Configura las claves en Administración > Configuración > Analytics.")
+
     lookup_key = PLAN_LOOKUP_KEYS.get(plan.get("duracion_meses", 1))
     if not lookup_key:
         raise HTTPException(status_code=400, detail="Plan no tiene configuración de Stripe")
@@ -206,6 +220,7 @@ async def create_checkout(req: PaymentRequest, user=Depends(require_pst)):
 
 @router.get("/pst/payment-status/{session_id}")
 async def get_payment_status(session_id: str, user=Depends(require_pst)):
+    await _get_stripe_config()
     record = await db.payment_transactions.find_one({"session_id": session_id})
     if not record:
         raise HTTPException(status_code=404, detail="Transacción no encontrada")
@@ -279,8 +294,11 @@ async def _activate_subscription_from_stripe(record, session):
 async def stripe_webhook(request: Request):
     payload = await request.body()
     sig = request.headers.get("stripe-signature", "")
+    _, webhook_secret = await _get_stripe_config()
+    if not webhook_secret:
+        raise HTTPException(status_code=500, detail="Stripe webhook secret not configured")
     try:
-        event = stripe.Webhook.construct_event(payload, sig, STRIPE_WEBHOOK_SECRET)
+        event = stripe.Webhook.construct_event(payload, sig, webhook_secret)
     except stripe.error.SignatureVerificationError:
         raise HTTPException(status_code=400, detail="Invalid signature")
 

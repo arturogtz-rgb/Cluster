@@ -62,8 +62,9 @@ class TestStripeKeyNoFallback:
             content = f.read()
         # No hardcoded emergent test key
         assert "sk_test_emergent" not in content
-        # Uses env var directly without default
-        assert 'os.environ.get("STRIPE_SECRET_KEY")' in content or "os.environ.get('STRIPE_SECRET_KEY')" in content
+        # Uses db.settings as primary source (not module-level stripe.api_key =)
+        assert "_get_stripe_config" in content
+        assert "db.settings" in content
 
 
 # -------- payment-status ownership check --------

@@ -311,6 +311,7 @@ class SiteSettingsUpdate(BaseModel):
     maintenance_mode: Optional[bool] = None
     stripe_publishable_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None
+    stripe_webhook_secret: Optional[str] = None
     google_analytics_id: Optional[str] = None
     google_tag_manager_id: Optional[str] = None
 
