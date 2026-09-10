@@ -56,7 +56,7 @@ api_router.include_router(payments_router)
 
 @api_router.get("/")
 async def root():
-    return {"message": "Clúster de Turismo de Naturaleza y Aventura Jalisco API"}
+    return {"message": "Clúster de Turismo de Jalisco API"}
 
 
 # Analytics endpoints for dashboard

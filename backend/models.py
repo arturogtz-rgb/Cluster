@@ -308,6 +308,7 @@ class SiteSettingsUpdate(BaseModel):
     banco_titular: Optional[str] = None
     banco_referencia: Optional[str] = None
     site_logo_url: Optional[str] = None
+    site_title: Optional[str] = None
     maintenance_mode: Optional[bool] = None
     stripe_publishable_key: Optional[str] = None
     stripe_secret_key: Optional[str] = None

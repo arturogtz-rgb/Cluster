@@ -1,6 +1,7 @@
 import { Helmet } from "react-helmet-async";
+import { useSiteSettings } from "./SiteSettingsContext";
 
-const SITE_NAME = "Clúster de Turismo de Naturaleza y Aventura Jalisco";
+const DEFAULT_SITE_NAME = "Clúster de Turismo de Jalisco";
 const DEFAULT_IMAGE = "https://customer-assets.emergentagent.com/job_tourism-cluster-mx/artifacts/jvvolfwz_Gemini_Generated_Image_plcp43plcp43plcp.png";
 const SITE_URL = process.env.REACT_APP_BACKEND_URL || "";
 
@@ -15,6 +16,8 @@ const SCHEMA_TYPE_MAP = {
 };
 
 export const PageSEO = ({ title, description, image, url, type = "website" }) => {
+  const { siteTitle } = useSiteSettings();
+  const SITE_NAME = siteTitle || DEFAULT_SITE_NAME;
   const fullTitle = title ? `${title} | ${SITE_NAME}` : SITE_NAME;
   const fullUrl = url ? `${SITE_URL}${url}` : SITE_URL;
   const ogImage = image || DEFAULT_IMAGE;
@@ -42,6 +45,8 @@ export const PageSEO = ({ title, description, image, url, type = "website" }) =>
 };
 
 export const EmpresaSEO = ({ empresa }) => {
+  const { siteTitle } = useSiteSettings();
+  const SITE_NAME = siteTitle || DEFAULT_SITE_NAME;
   if (!empresa) return null;
 
   const schemaType = SCHEMA_TYPE_MAP[empresa.categoria] || "LocalBusiness";
@@ -102,6 +107,8 @@ export const EmpresaSEO = ({ empresa }) => {
 };
 
 export const ArticuloSEO = ({ articulo }) => {
+  const { siteTitle } = useSiteSettings();
+  const SITE_NAME = siteTitle || DEFAULT_SITE_NAME;
   if (!articulo) return null;
 
   const fullUrl = `${SITE_URL}/prensa/${articulo.slug}`;
@@ -147,6 +154,8 @@ export const ArticuloSEO = ({ articulo }) => {
 };
 
 export const OrganizationSEO = () => {
+  const { siteTitle } = useSiteSettings();
+  const SITE_NAME = siteTitle || DEFAULT_SITE_NAME;
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Organization",

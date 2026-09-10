@@ -26,6 +26,7 @@ const AdminSettings = () => {
     banco_nombre: "", banco_clabe: "", banco_titular: "", banco_referencia: "",
     google_analytics_id: "", google_tag_manager_id: "",
     site_logo_url: "",
+    site_title: "",
     maintenance_mode: false,
   });
 
@@ -161,6 +162,18 @@ const AdminSettings = () => {
           {/* General Tab */}
           {activeTab === "general" && (
             <div className="space-y-6">
+              <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+                <h3 className="font-outfit font-bold text-lg flex items-center gap-2"><Sliders className="w-5 h-5 text-forest" /> Título del sitio</h3>
+                <p className="text-sm text-stone-500">Este título se muestra en la pestaña del navegador y en los metadatos SEO de todas las páginas públicas.</p>
+                <input
+                  type="text"
+                  value={settings.site_title || ""}
+                  onChange={(e) => setSettings({ ...settings, site_title: e.target.value })}
+                  placeholder="Clúster de Turismo de Jalisco"
+                  data-testid="site-title-input"
+                  className="w-full px-4 py-2.5 rounded-xl border border-stone-200 focus:outline-none focus:border-forest"
+                />
+              </div>
               <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
                 <h3 className="font-outfit font-bold text-lg flex items-center gap-2"><ImageIcon className="w-5 h-5 text-forest" /> Logo del sitio</h3>
                 <p className="text-sm text-stone-500">Este logo se muestra en el header, footer y favicon del sitio.</p>

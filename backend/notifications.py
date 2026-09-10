@@ -11,7 +11,7 @@ SMTP_PORT = int(os.environ.get("SMTP_PORT", "587"))
 SMTP_USER = os.environ.get("SMTP_USER", "")
 SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "")
 ADMIN_EMAIL = os.environ.get("ADMIN_EMAIL", "")
-SITE_NAME = "Clúster de Turismo de Naturaleza y Aventura Jalisco"
+SITE_NAME = "Clúster de Turismo de Jalisco"
 SITE_URL = os.environ.get("SITE_URL", "https://clusterturismojalisco.com.mx")
 
 

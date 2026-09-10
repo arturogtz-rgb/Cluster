@@ -6,18 +6,20 @@ const FALLBACK_LOGO = "https://customer-assets.emergentagent.com/job_tourism-clu
 
 const SiteSettingsContext = createContext({
   logo: FALLBACK_LOGO,
+  siteTitle: "",
   maintenance: false,
   loaded: false,
 });
 
 export function SiteSettingsProvider({ children }) {
-  const [settings, setSettings] = useState({ logo: FALLBACK_LOGO, maintenance: false, loaded: false });
+  const [settings, setSettings] = useState({ logo: FALLBACK_LOGO, siteTitle: "", maintenance: false, loaded: false });
 
   useEffect(() => {
     axios.get(`${API}/settings`).then(res => {
       const d = res.data || {};
       setSettings({
         logo: d.site_logo_url || FALLBACK_LOGO,
+        siteTitle: d.site_title || "",
         maintenance: !!d.maintenance_mode,
         loaded: true,
       });

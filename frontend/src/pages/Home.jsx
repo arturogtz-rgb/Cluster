@@ -317,7 +317,7 @@ const Home = () => {
             Tu portal al turismo de aventura en Jalisco
           </h2>
           <p className="text-stone-600 text-base max-w-2xl mx-auto mb-8 leading-relaxed">
-            Aquí encontrarás operadoras de aventura, hospedajes y experiencias únicas en la naturaleza de Jalisco, todas verificadas y afiliadas al Clúster de Turismo de Naturaleza y Aventura. Explora con confianza.
+            Aquí encontrarás operadoras de aventura, hospedajes y experiencias únicas en la naturaleza de Jalisco, todas verificadas y afiliadas al Clúster de Turismo de Jalisco. Explora con confianza.
           </p>
           {/* Quick Search */}
           <div className="flex flex-col sm:flex-row gap-3 max-w-xl mx-auto" data-testid="home-search">
@@ -425,7 +425,7 @@ const Home = () => {
             ¿Eres una empresa de turismo de naturaleza en Jalisco?
           </h2>
           <p className="font-inter text-stone-600 text-base md:text-lg mb-8 max-w-2xl mx-auto">
-            Únete al Clúster de Turismo de Naturaleza y Aventura y conecta con miles de visitantes buscando experiencias únicas.
+            Únete al Clúster de Turismo de Jalisco y conecta con miles de visitantes buscando experiencias únicas.
           </p>
           <Link
             to="/nosotros"
@@ -467,7 +467,7 @@ const Home = () => {
             </div>
           </div>
           <div className="border-t border-white/10 mt-8 pt-8 text-center text-white/50 text-sm space-y-1">
-            <p>© {new Date().getFullYear()} Clúster de Turismo de Naturaleza y Aventura Jalisco. Todos los derechos reservados.</p>
+            <p>© {new Date().getFullYear()} Clúster de Turismo de Jalisco. Todos los derechos reservados.</p>
             <p>Sitio desarrollado por Aventúrate Por Jalisco</p>
           </div>
         </div>
