@@ -33,7 +33,7 @@ class TestAfiliateAPIData:
 class TestNotificationsModule:
     def test_module_imports_and_functions_exist(self):
         import importlib, sys
-        sys.path.insert(0, "/app/backend")
+        sys.path.insert(0, BACKEND_DIR)
         mod = importlib.import_module("notifications")
         for name in [
             "send_registration_email",
@@ -47,16 +47,18 @@ class TestNotificationsModule:
 
     def test_send_gracefully_fails_without_smtp(self):
         import importlib, sys
-        sys.path.insert(0, "/app/backend")
+        sys.path.insert(0, BACKEND_DIR)
         mod = importlib.import_module("notifications")
         # Should not raise even if SMTP is not configured
         mod.send_registration_email("nobody@example.com", "Test")
+
+BACKEND_DIR = os.path.join(os.path.dirname(__file__), "..")
 
 
 # -------- Stripe key: no fallback --------
 class TestStripeKeyNoFallback:
     def test_payments_module_no_fallback(self):
-        with open("/app/backend/routes/payments.py") as f:
+        with open(os.path.join(BACKEND_DIR, "routes", "payments.py")) as f:
             content = f.read()
         # No hardcoded emergent test key
         assert "sk_test_emergent" not in content
@@ -95,7 +97,7 @@ class TestPaymentStatusAuth:
         # Setup: manually insert a payment_transactions record owned by user A,
         # then user B tries to access → 403.
         import asyncio, sys
-        sys.path.insert(0, "/app/backend")
+        sys.path.insert(0, BACKEND_DIR)
         from database import db
 
         token_a, cuenta_a, _ = _register_pst("TEST_bloqued_a")
