@@ -1,28 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
-  Building2,
-  Newspaper,
-  Tag,
-  FolderOpen,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  LayoutDashboard,
-  TreePine,
-  Search,
-  Command,
-  Mail,
-  Users,
-  FileText,
-  ClipboardCheck,
-  UserCheck,
+  Building2, Newspaper, Tag, FolderOpen, Settings, LogOut, Menu, X,
+  LayoutDashboard, TreePine, Search, Command, Mail, Users, FileText,
+  ClipboardCheck, UserCheck,
 } from "lucide-react";
 import CommandSearch from "./CommandSearch";
-
-const CLUSTER_LOGO =
-  "https://customer-assets.emergentagent.com/job_tourism-cluster-mx/artifacts/jvvolfwz_Gemini_Generated_Image_plcp43plcp43plcp.png";
+import { useSiteSettings, FALLBACK_LOGO } from "./SiteSettingsContext";
 
 const allNavItems = [
   { path: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, roles: ["admin", "editor"] },
@@ -44,6 +28,8 @@ const AdminLayout = ({ children }) => {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userRole, setUserRole] = useState("admin");
+  const { logo } = useSiteSettings();
+  const siteLogo = logo || FALLBACK_LOGO;
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
@@ -51,9 +37,7 @@ const AdminLayout = ({ children }) => {
       try {
         const payload = JSON.parse(atob(token.split(".")[1]));
         setUserRole(payload.role || "admin");
-      } catch (e) {
-        // fallback to admin
-      }
+      } catch (e) { /* fallback */ }
     }
   }, []);
 
@@ -71,59 +55,42 @@ const AdminLayout = ({ children }) => {
     <div className="min-h-screen bg-stone-100" data-testid="admin-layout">
       {/* Mobile Header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-stone-200 px-4 py-3 flex items-center justify-between">
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="p-2"
-          data-testid="mobile-sidebar-toggle"
-        >
+        <button onClick={() => setSidebarOpen(true)} className="p-2" data-testid="mobile-sidebar-toggle">
           <Menu className="w-6 h-6" />
         </button>
-        <img src={CLUSTER_LOGO} alt="Logo" className="h-8" />
+        <img src={siteLogo} alt="Logo" className="h-8" />
         <button onClick={handleLogout} className="p-2 text-stone-500">
           <LogOut className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Sidebar Overlay (mobile) - must be before sidebar in DOM */}
+      {/* Sidebar Overlay (mobile) */}
       {sidebarOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={() => setSidebarOpen(false)}
-          data-testid="sidebar-overlay"
-        />
+        <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setSidebarOpen(false)} data-testid="sidebar-overlay" />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`admin-sidebar fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:translate-x-0 overflow-y-auto ${
+        className={`admin-sidebar fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 lg:translate-x-0 flex flex-col ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         data-testid="admin-sidebar"
       >
-        <div className="p-6">
-          <div className="flex items-center justify-between mb-8">
+        {/* Header */}
+        <div className="p-6 pb-2 flex-shrink-0">
+          <div className="flex items-center justify-between mb-6">
             <div className="bg-white rounded-xl p-3 inline-block">
-              <img
-                src={CLUSTER_LOGO}
-                alt="Clúster Turismo"
-                className="h-12"
-              />
+              <img src={siteLogo} alt="Clúster Turismo" className="h-12" />
             </div>
-            <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 text-white/70 hover:text-white"
-            >
+            <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-2 text-white/70 hover:text-white">
               <X className="w-5 h-5" />
             </button>
           </div>
           {/* Search trigger */}
           <button
-            onClick={() => {
-              // Trigger the Cmd+K handler in CommandSearch
-              window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
-            }}
+            onClick={() => window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }))}
             data-testid="sidebar-search-btn"
-            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-all mb-4"
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-white/70 hover:bg-white/10 hover:text-white transition-all mb-2"
           >
             <Search className="w-5 h-5" />
             <span className="flex-1 text-left text-sm">Buscar...</span>
@@ -131,31 +98,32 @@ const AdminLayout = ({ children }) => {
               <Command className="w-2.5 h-2.5" />K
             </kbd>
           </button>
-
-          <nav className="space-y-1">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const active = isActive(item.path);
-              return (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  onClick={() => setSidebarOpen(false)}
-                  data-testid={`nav-${item.label.toLowerCase()}`}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${
-                    active
-                      ? "bg-white/20 text-white font-semibold"
-                      : "text-white/70 hover:bg-white/10 hover:text-white"
-                  }`}
-                >
-                  <Icon className="w-5 h-5" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
         </div>
-        <div className="absolute bottom-0 left-0 right-0 p-6">
+
+        {/* Scrollable Nav */}
+        <nav className="flex-1 overflow-y-auto px-6 space-y-1" data-testid="admin-nav">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const active = isActive(item.path);
+            return (
+              <Link
+                key={item.path}
+                to={item.path}
+                onClick={() => setSidebarOpen(false)}
+                data-testid={`nav-${item.label.toLowerCase()}`}
+                className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all ${
+                  active ? "bg-white/20 text-white font-semibold" : "text-white/70 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <Icon className="w-5 h-5" />
+                {item.label}
+              </Link>
+            );
+          })}
+        </nav>
+
+        {/* Logout - always visible at bottom, not absolute */}
+        <div className="p-6 pt-2 flex-shrink-0 border-t border-white/10">
           <button
             onClick={handleLogout}
             data-testid="logout-btn"
@@ -170,7 +138,6 @@ const AdminLayout = ({ children }) => {
       {/* Main Content */}
       <main className="lg:ml-64 pt-16 lg:pt-0 min-h-screen">{children}</main>
 
-      {/* Command Search - always mounted, manages own visibility */}
       <CommandSearch />
     </div>
   );

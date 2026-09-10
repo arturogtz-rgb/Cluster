@@ -2,9 +2,11 @@ import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 
-const CLUSTER_LOGO = "https://customer-assets.emergentagent.com/job_tourism-cluster-mx/artifacts/jvvolfwz_Gemini_Generated_Image_plcp43plcp43plcp.png";
+import { useSiteSettings, FALLBACK_LOGO } from "./SiteSettingsContext";
 
 const FloatingNav = () => {
+  const { logo } = useSiteSettings();
+  const siteLogo = logo || FALLBACK_LOGO;
   const [isScrolled, setIsScrolled] = useState(false);
   const [showNavLogo, setShowNavLogo] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -70,7 +72,7 @@ const FloatingNav = () => {
           >
             <div className={`${isScrolled ? "" : "bg-white/90 backdrop-blur-sm rounded-xl p-1.5"}`}>
               <img
-                src={CLUSTER_LOGO}
+                src={siteLogo}
                 alt="Clúster Turismo Jalisco"
                 className="h-7 md:h-9 w-auto"
               />

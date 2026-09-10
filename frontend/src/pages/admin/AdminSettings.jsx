@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { toast } from "sonner";
 import {
-  Save, Plus, Trash2, MessageCircle, Image as ImageIcon, CreditCard, Building, BarChart3, Tag, Upload,
+  Save, Plus, Trash2, MessageCircle, Image as ImageIcon, CreditCard, Building, BarChart3, Tag, Upload, Sliders, Construction,
 } from "lucide-react";
 import ImageUploader from "../../components/ImageUploader";
 
@@ -26,6 +26,7 @@ const AdminSettings = () => {
     banco_nombre: "", banco_clabe: "", banco_titular: "", banco_referencia: "",
     google_analytics_id: "", google_tag_manager_id: "",
     site_logo_url: "",
+    maintenance_mode: false,
   });
 
   const [planes, setPlanes] = useState([]);
@@ -119,6 +120,7 @@ const AdminSettings = () => {
   };
 
   const TABS = [
+    { id: "general", label: "General", icon: Sliders },
     { id: "hero", label: "Hero", icon: ImageIcon },
     { id: "whatsapp", label: "WhatsApp", icon: MessageCircle },
     { id: "planes", label: "Planes", icon: CreditCard },
@@ -155,6 +157,50 @@ const AdminSettings = () => {
 
       {loading ? <div className="skeleton rounded-2xl h-64" /> : (
         <div className="max-w-3xl">
+
+          {/* General Tab */}
+          {activeTab === "general" && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl shadow-sm p-6 space-y-4">
+                <h3 className="font-outfit font-bold text-lg flex items-center gap-2"><ImageIcon className="w-5 h-5 text-forest" /> Logo del sitio</h3>
+                <p className="text-sm text-stone-500">Este logo se muestra en el header, footer y favicon del sitio.</p>
+                {settings.site_logo_url && (
+                  <div className="flex items-center gap-4">
+                    <img src={settings.site_logo_url} alt="Logo actual" className="h-16 object-contain rounded-lg border bg-white p-2" />
+                    <span className="text-xs text-stone-400">Logo actual</span>
+                  </div>
+                )}
+                <ImageUploader
+                  value={settings.site_logo_url}
+                  onChange={(url) => setSettings({ ...settings, site_logo_url: url })}
+                  category="system"
+                  imageType="logo"
+                  label="Subir nuevo logo"
+                  token={token}
+                />
+              </div>
+              <div className="bg-white rounded-2xl shadow-sm p-6">
+                <h3 className="font-outfit font-bold text-lg flex items-center gap-2 mb-4"><Construction className="w-5 h-5 text-amber-500" /> Modo mantenimiento</h3>
+                <label className="flex items-center gap-3 cursor-pointer p-4 rounded-xl border border-stone-200 hover:bg-stone-50" data-testid="maintenance-toggle">
+                  <input
+                    type="checkbox"
+                    checked={settings.maintenance_mode || false}
+                    onChange={(e) => setSettings({ ...settings, maintenance_mode: e.target.checked })}
+                    className="w-5 h-5 rounded border-stone-300 text-amber-500 focus:ring-amber-500"
+                  />
+                  <div>
+                    <span className="block font-medium text-stone-800">Activar modo mantenimiento</span>
+                    <span className="text-xs text-stone-500">Los visitantes verán una página de "Sitio en mantenimiento". El acceso a /admin y /pst no se ve afectado.</span>
+                  </div>
+                </label>
+                {settings.maintenance_mode && (
+                  <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-700">
+                    El modo mantenimiento está activo. Los visitantes no pueden ver el sitio público.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Hero Tab */}
           {activeTab === "hero" && (

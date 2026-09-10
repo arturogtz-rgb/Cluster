@@ -307,6 +307,12 @@ class SiteSettingsUpdate(BaseModel):
     banco_clabe: Optional[str] = None
     banco_titular: Optional[str] = None
     banco_referencia: Optional[str] = None
+    site_logo_url: Optional[str] = None
+    maintenance_mode: Optional[bool] = None
+    stripe_publishable_key: Optional[str] = None
+    stripe_secret_key: Optional[str] = None
+    google_analytics_id: Optional[str] = None
+    google_tag_manager_id: Optional[str] = None
 
 
 class Categoria(BaseModel):

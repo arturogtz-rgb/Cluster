@@ -45,6 +45,8 @@ const PSTPaymentSuccess = lazy(() => import("./pages/pst/PSTPaymentSuccess"));
 import FloatingNav from "./components/FloatingNav";
 import WhatsAppButton from "./components/WhatsAppButton";
 import AdminLayout from "./components/AdminLayout";
+import { SiteSettingsProvider } from "./components/SiteSettingsContext";
+import MaintenanceGate from "./components/MaintenanceGate";
 
 const PageLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-limestone">
@@ -66,85 +68,88 @@ const ScrollToTop = () => {
 function App() {
   return (
     <div className="App min-h-screen bg-limestone">
+      <SiteSettingsProvider>
       <BrowserRouter>
         <ScrollToTop />
         <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Public Routes */}
+          {/* Public Routes - wrapped in MaintenanceGate */}
           <Route
             path="/"
             element={
-              <>
+              <MaintenanceGate>
                 <FloatingNav />
                 <Home />
                 <WhatsAppButton />
-              </>
+              </MaintenanceGate>
             }
           />
           <Route
             path="/empresas"
             element={
-              <>
+              <MaintenanceGate>
                 <FloatingNav />
                 <Empresas />
                 <WhatsAppButton />
-              </>
+              </MaintenanceGate>
             }
           />
           <Route
             path="/empresas/:slug"
             element={
-              <>
+              <MaintenanceGate>
                 <FloatingNav />
                 <EmpresaDetalle />
                 <WhatsAppButton />
-              </>
+              </MaintenanceGate>
             }
           />
           <Route
             path="/prensa"
             element={
-              <>
+              <MaintenanceGate>
                 <FloatingNav />
                 <Prensa />
                 <WhatsAppButton />
-              </>
+              </MaintenanceGate>
             }
           />
           <Route
             path="/prensa/:slug"
             element={
-              <>
+              <MaintenanceGate>
                 <FloatingNav />
                 <ArticuloDetalle />
                 <WhatsAppButton />
-              </>
+              </MaintenanceGate>
             }
           />
           <Route
             path="/mapa"
             element={
-              <>
+              <MaintenanceGate>
                 <FloatingNav />
                 <Mapa />
                 <WhatsAppButton />
-              </>
+              </MaintenanceGate>
             }
           />
           <Route
             path="/nosotros"
             element={
-              <>
+              <MaintenanceGate>
                 <FloatingNav />
                 <Nosotros />
                 <WhatsAppButton />
-              </>
+              </MaintenanceGate>
             }
           />
           <Route
             path="/afiliate"
             element={
-              <Afiliate />
+              <MaintenanceGate>
+                <Afiliate />
+              </MaintenanceGate>
             }
           />
 
@@ -308,6 +313,7 @@ function App() {
         <Toaster position="top-right" />
         </Suspense>
       </BrowserRouter>
+      </SiteSettingsProvider>
     </div>
   );
 }

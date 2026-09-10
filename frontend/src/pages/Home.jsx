@@ -4,10 +4,9 @@ import axios from "axios";
 import { ArrowRight, Mountain, Users, Award, Leaf, MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 import CompanyCard from "../components/CompanyCard";
 import { PageSEO, OrganizationSEO } from "../components/SEO";
+import { useSiteSettings, FALLBACK_LOGO } from "../components/SiteSettingsContext";
 
 const API = `${process.env.REACT_APP_BACKEND_URL}/api`;
-
-const CLUSTER_LOGO = "https://customer-assets.emergentagent.com/job_tourism-cluster-mx/artifacts/jvvolfwz_Gemini_Generated_Image_plcp43plcp43plcp.png";
 
 const DEFAULT_HERO_IMAGE = "https://images.unsplash.com/photo-1732043846829-dc34d9e2e989?w=1920";
 
@@ -48,6 +47,8 @@ const DEFAULT_STATS = [
 const STAT_ICONS = [Mountain, Users, Award, Leaf, MapPin];
 
 const Home = () => {
+  const { logo: siteLogo } = useSiteSettings();
+  const CLUSTER_LOGO = siteLogo || FALLBACK_LOGO;
   const [empresasDestacadas, setEmpresasDestacadas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [heroLogoHidden, setHeroLogoHidden] = useState(false);
