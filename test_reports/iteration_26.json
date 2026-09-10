@@ -1,0 +1,23 @@
+{
+  "summary": "Backend-only tests for the storage.py migration from Emergent Object Storage to local filesystem. All 7 tests passed: (1) storage.py contains no references to requests / emergentagent.com / EMERGENT_LLM_KEY, (2) most-recent backend startup log shows 'Local file storage ready' (later than any prior 'Object storage initialized'), (3) POST /api/media/upload with admin creds returns url starting with /api/files/ and the file physically exists on disk under /app/backend/uploads/, (4) GET /api/files/<path> returns 200 with image content-type and non-zero body, (5) POST /api/pst/documents/upload works end-to-end with pst_auth token and roundtrips via /api/files/, (6) Legacy /api/uploads/* StaticFiles mount still serves files, (7) CI simulation: spawned a fresh uvicorn on 127.0.0.1:8095 with env -i (only MONGO_URL, DB_NAME, JWT_SECRET, CORS_ORIGINS, ADMIN_INITIAL_PASSWORD - explicitly NO EMERGENT_LLM_KEY) and successfully uploaded + downloaded a 1x1 PNG, and its startup log contains 'Local file storage ready' and NOT 'Object storage initialized'. Uploads now work with zero Emergent credentials.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_storage_local.py",
+    "/app/test_reports/pytest/iter26_storage.xml"
+  ],
+  "action_items": [],
+  "critical_code_review_comments": [
+    "storage.py is clean and minimal (32 lines): init_storage/put_object/get_object using pathlib only. No leaked HTTP calls.",
+    "media_settings.get /files/{path:path} correctly falls back to mimetypes when the media DB record is missing - good.",
+    "PST login uses field 'email' (not 'username') - test fixtures had to use /api/pst/login. Consider standardising auth login shape across admin vs PST for consistency.",
+    "Backend .env still contains EMERGENT_LLM_KEY but storage.py no longer reads it; safe. Ensure prod VPS deployment doesn't need to set that key at all (confirmed via CI simulation)."
+  ],
+  "updated_files": ["/app/backend/tests/test_storage_local.py"],
+  "success_rate": {"backend": "100%", "frontend": "not tested (backend-only request)"},
+  "test_credentials": "admin/admin123 (admin login via /api/auth/login), test@empresa.com/password123 (PST login via /api/pst/login).",
+  "seed_data_creation": "None. Test files uploaded through the API were left in /app/backend/uploads/ (small PNGs). Legacy marker file is cleaned up in finally block.",
+  "retest_needed": false,
+  "should_main_agent_self_test": false,
+  "context_for_next_testing_agent": "Storage migration is verified end-to-end including a real CI simulation with env -i. Test file /app/backend/tests/test_storage_local.py is reusable as a regression check for uploads. If backend .env changes in the future, the CI-sim fixture whitelists only MONGO_URL/DB_NAME/JWT_SECRET/CORS_ORIGINS/ADMIN_INITIAL_PASSWORD - update if new required vars are introduced."
+}

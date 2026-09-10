@@ -260,7 +260,7 @@ async def startup_event():
         from storage import init_storage
         init_storage()
     except Exception as e:
-        logger.warning(f"Object storage init failed (uploads may not work): {e}")
+        logger.warning(f"Storage init failed: {e}")
     # Start daily expiration reminder scheduler
     try:
         from apscheduler.schedulers.asyncio import AsyncIOScheduler

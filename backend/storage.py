@@ -1,65 +1,31 @@
 import os
 import logging
-import requests
+import mimetypes
+from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-STORAGE_BASE = (os.environ.get("INTEGRATION_PROXY_URL") or "").strip() or "https://integrations.emergentagent.com"
-STORAGE_URL = STORAGE_BASE.rstrip("/") + "/objstore/api/v1/storage"
-EMERGENT_KEY = os.environ.get("EMERGENT_LLM_KEY")
-APP_NAME = "cluster-turismo-jalisco"
-
-storage_key = None
+UPLOAD_DIR = Path(__file__).parent / "uploads"
 
 
 def init_storage(force: bool = False):
-    global storage_key
-    if storage_key and not force:
-        return storage_key
-    resp = requests.post(
-        f"{STORAGE_URL}/init",
-        json={"emergent_key": EMERGENT_KEY},
-        timeout=30,
-    )
-    resp.raise_for_status()
-    storage_key = resp.json()["storage_key"]
-    logger.info("Object storage initialized successfully")
-    return storage_key
+    """Ensure the uploads directory exists."""
+    UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+    logger.info("Local file storage ready at %s", UPLOAD_DIR)
 
 
 def put_object(path: str, data: bytes, content_type: str) -> dict:
-    key = init_storage()
-    resp = requests.put(
-        f"{STORAGE_URL}/objects/{path}",
-        headers={"X-Storage-Key": key, "Content-Type": content_type},
-        data=data,
-        timeout=120,
-    )
-    if resp.status_code == 404:
-        key = init_storage(force=True)
-        resp = requests.put(
-            f"{STORAGE_URL}/objects/{path}",
-            headers={"X-Storage-Key": key, "Content-Type": content_type},
-            data=data,
-            timeout=120,
-        )
-    resp.raise_for_status()
-    return resp.json()
+    """Write file to local disk. `path` is a slash-separated key like 'app/uploads/system/file.jpg'."""
+    file_path = UPLOAD_DIR / path
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    file_path.write_bytes(data)
+    return {"path": path}
 
 
 def get_object(path: str) -> tuple:
-    key = init_storage()
-    resp = requests.get(
-        f"{STORAGE_URL}/objects/{path}",
-        headers={"X-Storage-Key": key},
-        timeout=60,
-    )
-    if resp.status_code == 404:
-        key = init_storage(force=True)
-        resp = requests.get(
-            f"{STORAGE_URL}/objects/{path}",
-            headers={"X-Storage-Key": key},
-            timeout=60,
-        )
-    resp.raise_for_status()
-    return resp.content, resp.headers.get("Content-Type", "application/octet-stream")
+    """Read file from local disk. Returns (bytes, content_type)."""
+    file_path = UPLOAD_DIR / path
+    if not file_path.is_file():
+        raise FileNotFoundError(f"File not found: {path}")
+    content_type = mimetypes.guess_type(str(file_path))[0] or "application/octet-stream"
+    return file_path.read_bytes(), content_type
